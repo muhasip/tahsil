@@ -1,0 +1,19 @@
+---
+title: "Kullanıcı erişim politikaları"
+description: "Kullanıcı IP ve zaman aralığı güvenlik politikaları."
+icon: "shield-check"
+---
+
+Kullanıcı erişimi IP aralığı ve zaman penceresi politikalarıyla sınırlandırılabilir. Politikalar kullanıcı oturumunda uygulanır ve güvenlik olayları kararlı hata kodlarıyla döner.
+
+Başlıca alanlar:
+
+- İzin verilen IP/CIDR aralıkları
+- IANA timezone ile erişim zaman pencereleri
+- Kullanıcı profili üzerinden güvenli politika güncelleme
+
+Kullanıcı kendi profilindeki izin verilen alanları `PATCH /auth/me` ile güncelleyebilir. Firma ve platform yönetim ayarları müşteri API'sinin parçası değildir.
+
+<Note>
+  Bu portal web ve mobil uygulamaların kullandığı normal kullanıcı API'sini anlatır. Sunucudan sunucuya entegrasyon sözleşmeleri bu portalın kapsamında değildir.
+</Note>

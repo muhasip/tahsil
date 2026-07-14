@@ -1,0 +1,16 @@
+---
+title: Otomasyon kuralları ve atamalar
+description: Hareket eşleştirme, önizleme, backfill ve manuel atama akışları.
+---
+
+Kurallar banka hareketlerini müşterinin ERP, CRM, muhasebe veya tahsilat sistemindeki harici kayıtlara bağlar. Tahsil hedef kaydın sahibi değildir; yalnız `source + entityType + externalId` referansını saklar.
+
+## Güvenli devreye alma
+
+1. Kuralı oluşturun veya optimistic version ile güncelleyin.
+2. `preview-runs` ile geçmiş veride salt-okunur önizleme başlatın.
+3. Örnek eşleşmeleri ve aday sayısını kontrol edin.
+4. Yalnız güncel ve tamamlanmış preview üzerinden `backfill-runs` başlatın.
+5. Run ilerlemesini `/banks/transaction-rule-runs/{id}` üzerinden izleyin.
+
+Manuel atamalar otomatik kural güncellemelerinden korunur. Backfill, retry ve cancel gerçek production verisini etkileyebileceği için canlı konsolda yazılı onay ister.

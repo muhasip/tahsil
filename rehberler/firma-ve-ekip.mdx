@@ -1,0 +1,20 @@
+---
+title: "Firma ve üyelik kapsamı"
+description: "Aktif firma, üyelikler ve rol sınırları."
+icon: "users"
+---
+
+Tahsil'de her veri kaydı bir firma tenant'ı içinde yaşar. Kullanıcıların firma erişimi membership kayıtlarıyla belirlenir; yalnız request body içindeki bir firma kimliğine güvenilmez.
+
+## Temel akış
+
+1. `GET /auth/me` ile kullanıcı ve membership listesini alın.
+2. Kullanıcının seçtiği üyeliği aktif firma olarak belirleyin.
+3. Firma kapsamındaki çağrılarda `x-company-id` gönderin.
+4. Ekran ve aksiyonları membership rolüne göre gösterin.
+
+`admin` ve `operator` bankacılık ve otomasyon operasyonlarını yürütebilir. Salt-okunur roller veri değiştiren çağrılara erişemez. Ekip daveti ve üyelik yönetimi müşteri API'sinin mevcut sürümünde yer almaz.
+
+<Warning>
+  Rol kontrolünü yalnız arayüzde yapmayın. Sunucu her çağrıda kullanıcı üyeliğini ve tenant kapsamını yeniden doğrular.
+</Warning>

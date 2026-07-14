@@ -1,0 +1,128 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "palm",
+  "name": "Tahsil Developers",
+  "description": "Tahsil kullanıcı API dokümantasyonu",
+  "colors": {
+    "primary": "#059669",
+    "light": "#34D399",
+    "dark": "#047857"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "/"
+  },
+  "favicon": "/logo/favicon.svg",
+  "appearance": {
+    "default": "system",
+    "strict": false
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs",
+    "codeblocks": "system"
+  },
+  "api": {
+    "playground": {
+      "display": "simple",
+      "proxy": false,
+      "credentials": false
+    },
+    "examples": {
+      "languages": ["curl", "javascript", "php"],
+      "defaults": "required"
+    }
+  },
+  "contextual": {
+    "options": ["copy", "view", "download-spec"]
+  },
+  "navigation": {
+    "languages": [
+      {
+        "language": "tr",
+        "default": true,
+        "tabs": [
+          {
+            "tab": "Dokümantasyon",
+            "icon": "book-open",
+            "groups": [
+              {
+                "group": "Genel Bakış",
+                "pages": ["index"]
+              },
+              {
+                "group": "Başlangıç",
+                "pages": [
+                  "baslangic/hizli-baslangic",
+                  "baslangic/kimlik-dogrulama",
+                  "baslangic/firma-kapsami"
+                ]
+              },
+              {
+                "group": "Hesap ve Organizasyon",
+                "pages": [
+                  "rehberler/firma-ve-ekip",
+                  "rehberler/abonelik-ve-limitler",
+                  "rehberler/erisim-politikalari"
+                ]
+              },
+              {
+                "group": "Bankacılık",
+                "pages": [
+                  "rehberler/hesaplar-ve-senkronizasyon",
+                  "rehberler/hareketler",
+                  "rehberler/dashboard"
+                ]
+              },
+              {
+                "group": "Otomasyon",
+                "pages": [
+                  "rehberler/otomasyon-kurallari",
+                  "rehberler/zamanlanmis-sorgular"
+                ]
+              },
+              {
+                "group": "Operasyon",
+                "pages": [
+                  "rehberler/connector-loglari",
+                  "rehberler/sayfalama-ve-csv"
+                ]
+              },
+              {
+                "group": "Kaynaklar",
+                "pages": [
+                  "referans/hata-kodlari",
+                  "referans/surumleme",
+                  "degisiklikler"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Referansı",
+            "icon": "brackets-curly",
+            "openapi": "openapi/openapi.yaml"
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "API durumu",
+        "href": "https://api.tahsil.dev/health"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "API referansı",
+      "href": "/api-reference"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/muhasip/tahsil"
+    }
+  }
+}

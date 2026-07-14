@@ -1,0 +1,31 @@
+# Tahsil Developer Documentation
+
+Tahsil web ve mobil uygulamalarının kullandığı normal kullanıcı API'si için public Mintlify dokümantasyon reposu.
+
+- Yayın: https://tahsil.mintlify.site
+- API: https://api.tahsil.dev
+- Sözleşme: `openapi/openapi.yaml` (57 müşteri operasyonu)
+
+İç platform yönetim sözleşmesi, sunucudan sunucuya özel entegrasyon sözleşmeleri, provider ayrıntıları, credential değerleri ve server kaynak kodu bu repoya dahil edilmez.
+
+## Yerel çalışma
+
+```bash
+npm ci
+npm run dev
+```
+
+## Doğrulama
+
+```bash
+npm run ci
+```
+
+## OpenAPI senkronizasyonu
+
+```bash
+npm run sync:openapi
+npm run ci
+```
+
+Senkronizasyon kaynağı production `/openapi` müşteri sözleşmesidir. Değişiklikler otomatik olarak ayrı bir pull request ile önerilir.

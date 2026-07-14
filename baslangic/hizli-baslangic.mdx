@@ -1,0 +1,66 @@
+---
+title: "5 dakikada başlayın"
+description: "Tahsil kullanıcı API'si ile ilk güvenli isteğinizi gönderin."
+icon: "rocket"
+---
+
+Tahsil kullanıcı API'sinin production adresi:
+
+```text
+https://api.tahsil.dev
+```
+
+Kullanıcı API'si Bearer access token ile çalışır. Web istemcilerinde refresh token `HttpOnly` cookie içinde tutulur; kalıcı tarayıcı depolamasına yazılmaz.
+
+## 1. Oturum açın
+
+```bash
+curl --request POST \
+  --url https://api.tahsil.dev/auth/login \
+  --header 'content-type: application/json' \
+  --data '{"email":"developer@example.com","password":"example-password"}'
+```
+
+Başarılı cevap içindeki kısa ömürlü `accessToken` değerini yalnız uygulama belleğinde tutun.
+
+## 2. Kullanıcı profilini okuyun
+
+```javascript
+const response = await fetch('https://api.tahsil.dev/auth/me', {
+  headers: {
+    authorization: `Bearer ${accessToken}`,
+  },
+});
+
+if (!response.ok) throw new Error(`Tahsil API: ${response.status}`);
+const payload = await response.json();
+console.log(payload.result.user, payload.result.memberships);
+```
+
+## 3. Firma kapsamındaki hesapları listeleyin
+
+```php
+<?php
+$curl = curl_init('https://api.tahsil.dev/banks/accounts');
+curl_setopt_array($curl, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'authorization: Bearer ' . getenv('TAHSIL_ACCESS_TOKEN'),
+        'x-company-id: ' . getenv('TAHSIL_COMPANY_ID'),
+    ],
+]);
+
+$body = curl_exec($curl);
+$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+curl_close($curl);
+
+if ($status >= 400) {
+    throw new RuntimeException("Tahsil API HTTP $status");
+}
+
+$payload = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+```
+
+<Tip>
+  Kullanıcının erişebildiği firmalar `/auth/me` cevabındaki membership listesinde bulunur. Bir yazma işlemi göndermeden önce aktif firma kimliğini `x-company-id` ile belirtin.
+</Tip>

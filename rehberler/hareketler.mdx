@@ -1,0 +1,25 @@
+---
+title: Banka hareketleri
+description: Hareket listeleme, detay, filtreler ve güvenli dışa aktarma.
+---
+
+`GET /banks/transactions` hareketleri firma kapsamı içinde listeler. Büyük ve değişen veri kümelerinde `pagination=cursor`, klasik ekranlarda offset sayfalama kullanılabilir.
+
+Başlıca filtreler:
+
+- `bankCode`, `accountId`, `subAccountKey`, `currency`
+- `incoming`, tutar aralığı ve tarih aralığı
+- açıklama, IBAN, ad-soyad ve kimlik/vergi numarası araması
+- harici referans ve etiket filtreleri
+
+```bash
+curl --get https://api.tahsil.dev/banks/transactions \
+  --header "authorization: Bearer $TAHSIL_ACCESS_TOKEN" \
+  --header "x-company-id: $TAHSIL_COMPANY_ID" \
+  --data-urlencode 'pagination=cursor' \
+  --data-urlencode 'bankCode=akbank' \
+  --data-urlencode 'currency=TRY' \
+  --data-urlencode 'limit=50'
+```
+
+CSV çıktısı aynı allowlist filtrelerini `GET /banks/transactions/export` üzerinden uygular. Satır sınırı aşıldığında `413` döner.

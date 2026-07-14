@@ -1,0 +1,25 @@
+---
+title: Hesaplar ve senkronizasyon
+description: Banka bağlantısı, credential durumu, setup ve manuel sync akışı.
+---
+
+Bir firma aynı banka kodu için tek bağlantı taşır. Bankanın döndürdüğü fiziksel hesaplar ve para birimi kırılımları `subAccounts[]` içinde, kararlı `subAccountKey` ile sunulur.
+
+## Önerilen sıra
+
+1. `POST /banks/accounts` ile bağlantıyı kaydedin.
+2. `PUT /banks/accounts/{id}/credentials` ile banka credential'larını saklayın.
+3. `POST /banks/accounts/{id}/setup` ile bağlantıyı doğrulayıp alt hesapları keşfedin.
+4. `POST /banks/accounts/{id}/sync` ile hareketleri alın.
+5. `GET /banks/accounts/{id}/health` ile son setup, sync ve schedule durumunu izleyin.
+
+Setup ve sync yalnız Bearer `admin` veya `operator` rolüyle ve `x-company-id` header'ıyla çalışır.
+
+```json
+{
+  "startDate": "2026-07-01",
+  "endDate": "2026-07-15"
+}
+```
+
+Tarihler opsiyoneldir, `YYYY-MM-DD` biçimindedir ve kalıcı credential state'ine yazılmaz. Aynı hareket tekrar alındığında `providerStamp` üzerinden çoğaltılmaz.

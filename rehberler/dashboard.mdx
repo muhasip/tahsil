@@ -1,0 +1,19 @@
+---
+title: Dashboard sorguları
+description: Allowlist tabanlı finansal analiz DSL'i.
+---
+
+`POST /banks/dashboard/query` veri değiştirmeyen bir sorgudur. Serbest Mongo pipeline kabul etmez; yalnız katalogda tanımlı alan, grup ve metrikler çalışır.
+
+```json
+{
+  "range": { "preset": "last_30d", "timezone": "Europe/Istanbul" },
+  "filters": { "currency": ["TRY"], "incoming": true },
+  "groupBy": ["bankCode", "currency"],
+  "metrics": ["count", "sum(amount)"],
+  "sort": [{ "field": "sum(amount)", "direction": "desc" }],
+  "limit": 20
+}
+```
+
+Özel tarih aralığı en fazla 365 gündür. Para birimleri otomatik çevrilmez; sonuçlar currency kırılımını korur. Kullanılabilir DSL'i önce `GET /banks/dashboard/catalog` ile okuyabilirsiniz.

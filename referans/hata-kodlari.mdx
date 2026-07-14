@@ -1,0 +1,21 @@
+---
+title: Hata kodları
+description: HTTP durumları ve kararlı makine hata kodları.
+---
+
+Başarısız cevaplar `status: false` ve mümkün olduğunda kararlı bir `error.code` içerir. İnsan mesajı değişebilir; entegrasyon mantığını HTTP status ve code üzerine kurun.
+
+| HTTP | Anlam |
+| --- | --- |
+| `400` | Eksik tenant header veya geçersiz istek |
+| `401` | Bearer/API credential geçersiz veya eksik |
+| `402` | Paket ya da kullanım limiti reddi |
+| `403` | Rol, firma, IP veya zaman politikası reddi |
+| `404` | Firma kapsamında kayıt bulunamadı |
+| `409` | Duplicate bağlantı veya optimistic version çakışması |
+| `413` | CSV satır sınırı aşıldı |
+| `422` | Doğrulanan DSL veya domain kuralı reddedildi |
+| `429` | Global ya da firma rate limit'i |
+| `502/503` | Dış bağlantı veya bağımlılık geçici olarak hazır değil |
+
+Erişim politikalarında `ACCESS_IP_DENIED` ve `ACCESS_TIME_DENIED` kodları dönebilir. Geçici hatalarda exponential backoff ve jitter kullanın; create/sync tekrarlarında idempotency davranışını koruyun.

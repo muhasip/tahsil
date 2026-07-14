@@ -1,0 +1,32 @@
+---
+title: "Tahsil Developers"
+description: "Çok bankalı finans verisini tek ve güvenli API üzerinden ürününüze bağlayın."
+mode: "wide"
+---
+
+# Banka verisini tek API ile ürününüze bağlayın
+
+Hesapları, hareketleri, zamanlanmış senkronizasyonu ve kural tabanlı eşleştirmeyi firma sınırları korunarak yönetin.
+
+<CardGroup cols={2}>
+  <Card title="5 dakikada başlayın" icon="rocket" href="/baslangic/hizli-baslangic">
+    Kullanıcı oturumu açın, profilinizi okuyun ve aktif firmanızı seçin.
+  </Card>
+  <Card title="API referansını açın" icon="brackets-curly" href="/api-reference">
+    Tahsil uygulamasının kullanıcı API'sini, request şemalarını ve response örneklerini inceleyin.
+  </Card>
+  <Card title="Firma sınırlarını anlayın" icon="building-shield" href="/baslangic/firma-kapsami">
+    `x-company-id` ve `x-company-ids` header kurallarını doğru uygulayın.
+  </Card>
+  <Card title="Otomasyonu kurun" icon="gear" href="/rehberler/otomasyon-kurallari">
+    Senkronizasyon, eşleştirme ve kontrollü backfill akışlarını yönetin.
+  </Card>
+</CardGroup>
+
+## Tek güven sınırı: Core API
+
+Web ve mobil istemciler yalnız `https://api.tahsil.dev` adresini çağırır. Banka bağlantısı ayrıntıları ve hassas credential değerleri uygulama cevaplarına veya entegrasyon loglarına taşınmaz.
+
+<Warning>
+  API referansı production adresini gösterir ancak canlı istek göndermez. Güvenli request örneklerini kopyalayıp kendi test ortamınızda çalıştırın.
+</Warning>

@@ -1,0 +1,36 @@
+---
+title: "Kimlik doğrulama"
+description: "Bearer oturumu ile API key ve secret akışlarının doğru kullanımı."
+icon: "key"
+---
+
+Tahsil kullanıcı API'si Bearer oturumuyla çalışır. Login ve refresh uçları dışında korumalı çağrılar geçerli bir access token ister.
+
+## Oturum açma
+
+```bash
+curl --request POST \
+  --url https://api.tahsil.dev/auth/login \
+  --header 'content-type: application/json' \
+  --data '{"email":"developer@example.com","password":"example-password"}'
+```
+
+Başarılı cevap kısa ömürlü `accessToken`, refresh bilgisi, aktif firma ve membership listesini döndürür. Access token çağrılarda kullanılır:
+
+```http
+Authorization: Bearer eyJ...
+```
+
+## Web oturumu
+
+Web oturumlarında `x-auth-mode: cookie` gönderildiğinde refresh token `HttpOnly` cookie içinde tutulur. İstemci `credentials: include` kullanmalı; sayfa yenilemede önce `/auth/refresh`, sonra `/auth/me` çağrılmalıdır.
+
+Access token yalnız uygulama belleğinde tutulur. Refresh token, access token, parola ve banka credential değerlerini localStorage, log veya analytics içine yazmayın.
+
+## Çıkış
+
+`POST /auth/logout` refresh oturumunu geçersiz kılar ve cookie tabanlı kullanımda oturum cookie'sini temizler.
+
+<Note>
+  Banka credential yönetimi, setup, manuel sync ve otomasyon işlemleri yalnız `admin` veya `operator` rolündeki kullanıcılar için açıktır.
+</Note>

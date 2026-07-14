@@ -1,0 +1,14 @@
+---
+title: Sürümleme ve geriye uyumluluk
+description: Tahsil kullanıcı API'si v1 uyumluluk politikası.
+---
+
+Mevcut versiyonsuz endpoint yüzeyi ürün API v1 kabul edilir.
+
+- Yeni opsiyonel alanlar, endpointler ve opt-in query parametreleri additive değişikliktir.
+- Alan adı, tip veya semantik değişikliği `/v2` ya da açık migration penceresi gerektirir.
+- Deprecated alanlar en az bir yayın dönemi korunur.
+- Offset pagination korunur; cursor pagination opt-in'dir.
+- Hata kodları kararlı makine sözleşmesidir; insan mesajları değişebilir.
+
+OpenAPI snapshot'ı günlük olarak production sözleşmesiyle karşılaştırılır ve değişiklik ayrı bir review üzerinden portala alınır.

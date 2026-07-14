@@ -1,0 +1,17 @@
+---
+title: "Abonelik ve kullanım limitleri"
+description: "Ürün, plan, entitlement ve kullanım sınırlarını okuyun."
+icon: "chart-pie"
+---
+
+Firma aboneliği kullanılabilir banka bağlantısı, hareket hacmi ve özellik limitlerini belirler. İstemci mevcut yetkileri server cevabından okumalı; plan adlarına göre sabit davranış üretmemelidir.
+
+`GET /banks/usage` aktif firmanın bankacılık kullanımını ve kalan limitlerini gösterir. Bir limit dolduğunda API `402` ile makine tarafından işlenebilir bir hata döndürebilir.
+
+## Uygulama önerisi
+
+- Ekranı açarken güncel usage ve entitlement bilgisini alın.
+- Kalan limiti kullanıcıya aksiyondan önce gösterin.
+- `402` cevabını yükseltme veya yöneticiye başvuru akışına bağlayın.
+- Fiyat ve plan davranışlarını istemci koduna gömmeyin.
+

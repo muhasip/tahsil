@@ -1,0 +1,22 @@
+{
+  "name": "@muhasip/tahsil-developer-docs",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "mint dev",
+    "validate": "mint validate",
+    "check:openapi": "redocly lint openapi/openapi.yaml --extends minimal",
+    "check:content": "node scripts/check-content.mjs",
+    "sync:openapi": "node scripts/sync-openapi.mjs",
+    "ci": "npm run check:openapi && npm run check:content && npm run validate"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.39.0",
+    "mint": "^4.2.0",
+    "yaml": "^2.9.0"
+  }
+}

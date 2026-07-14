@@ -1,0 +1,14 @@
+---
+title: Sayfalama ve CSV
+description: Offset, cursor ve güvenli export davranışları.
+---
+
+Offset sayfalama mevcut ekran uyumluluğu için korunur. Sürekli yeni hareket yazılan büyük veri kümelerinde stable cursor kullanın:
+
+```text
+GET /banks/transactions?pagination=cursor&limit=100&sortField=transactionDate&sortDirection=desc
+```
+
+Sonraki istekte response içindeki cursor değerini gönderin. Cursor, sıralama alanı ile `_id` birleşimini korur.
+
+CSV export aynı filtre allowlist'ini kullanır, tenant sınırını korur ve spreadsheet formül enjeksiyonuna karşı hücreleri güvenli biçimde üretir.

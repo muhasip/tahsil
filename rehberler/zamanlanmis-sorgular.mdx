@@ -1,0 +1,13 @@
+---
+title: Zamanlanmış sorgular
+description: Polling schedule oluşturma, duraklatma ve sağlık takibi.
+---
+
+Schedule tanımı `accountId` üzerinden hedef banka bağlantısını bulur; `bankCode` istemciden alınmaz. Interval veya IANA timezone tabanlı çalışma pencereleri kullanılabilir.
+
+- Liste: `GET /banks/account-query-schedules`
+- Oluşturma: `POST /banks/account-query-schedules`
+- Güncelleme: `PUT /banks/account-query-schedules/{id}`
+- Duraklatma/devam: `PATCH .../pause` ve `PATCH .../resume`
+
+Write işlemleri Bearer `admin` veya `operator` rolü ve `x-company-id` ister. Worker; lease, heartbeat, retry ve aynı firma+banka için eşzamanlı çalışma sınırı uygular.

@@ -1,0 +1,2090 @@
+openapi: 3.1.0
+info:
+  title: Tahsil API
+  version: 1.0.0
+  description: Tahsil müşterilerinin web ve mobil uygulamalarda kullandığı tenant-scoped müşteri API sözleşmesi.
+servers:
+  - url: https://api.tahsil.dev
+    description: Production
+security:
+  - bearerAuth: []
+tags:
+  - name: Operations - Health
+    description: Public liveness and dependency readiness probes.
+  - name: Identity - Auth
+    description: User login, refresh and logout flows for token-based access.
+  - name: Banking - Accounts
+    description: Bank account aggregation endpoints available to customer tenants.
+  - name: Banking - Transactions
+    description: Bank transaction ingestion and retrieval endpoints.
+  - name: Banking - Automation
+    description: Tenant transaction matching rules, assignments and historical runs.
+  - name: Banking - Polling
+    description: Polling schedule definitions for bank connector queries.
+  - name: Banking - Dashboard
+    description: Flexible tenant dashboard analytics and widget query endpoints.
+  - name: Audit - Connector Logs
+    description: Customer-visible bank connector request/response audit trail.
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags:
+        - Operations - Health
+      summary: Process liveness probe
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /ready:
+    get:
+      operationId: getReady
+      tags:
+        - Operations - Health
+      summary: Dependency readiness probe
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "503":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/usage:
+    get:
+      operationId: getBanksUsage
+      tags:
+        - Banking - Accounts
+      summary: Return tenant subscription usage and remaining limits
+      description: Requires x-company-id. Optional bankCode adds the bank-specific transaction metric.
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: bankCode
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "402":
+          $ref: "#/components/responses/StatusResponse"
+        "503":
+          $ref: "#/components/responses/StatusResponse"
+      security:
+        - bearerAuth: []
+  /banks/accounts:
+    get:
+      operationId: getBanksAccounts
+      tags:
+        - Banking - Accounts
+      summary: List bank connections with provider-owned sub-accounts
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+    post:
+      operationId: postBanksAccounts
+      tags:
+        - Banking - Accounts
+      summary: Register one bank connection for the tenant
+      description: A tenant can register a bank code once. Currency and physical accounts are discovered by provider setup and returned as subAccounts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BankAccountCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "402":
+          $ref: "#/components/responses/StatusResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+      security:
+        - bearerAuth: []
+  /banks/accounts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getBanksAccountsById
+      tags:
+        - Banking - Accounts
+      summary: Bank account connector detail
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+    put:
+      operationId: putBanksAccountsById
+      tags:
+        - Banking - Accounts
+      summary: Update bank account connector
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BankAccountUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+      security:
+        - bearerAuth: []
+    delete:
+      operationId: deleteBanksAccountsById
+      tags:
+        - Banking - Accounts
+      summary: Remove bank account connector
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+      security:
+        - bearerAuth: []
+  /banks/provider/variables:
+    get:
+      operationId: getBanksProviderVariables
+      tags:
+        - Banking - Accounts
+      summary: List normalized provider connection field metadata
+      description: Returns field definitions only; provider credential values are never returned. Date fields are transaction query controls, not stored credentials.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        "403":
+          $ref: "#/components/responses/StatusResponse"
+        "502":
+          $ref: "#/components/responses/StatusResponse"
+  /banks/provider/variables/{bankCode}:
+    parameters:
+      - name: bankCode
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getBanksProviderVariablesByBankCode
+      tags:
+        - Banking - Accounts
+      summary: Read normalized provider connection field metadata for a bank
+      description: Requires a tenant admin or operator Bearer token and proxies metadata through Core without exposing the provider envelope.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "400":
+          $ref: "#/components/responses/StatusResponse"
+        "403":
+          $ref: "#/components/responses/StatusResponse"
+        "404":
+          $ref: "#/components/responses/StatusResponse"
+        "502":
+          $ref: "#/components/responses/StatusResponse"
+  /banks/accounts/{id}/credentials:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: x-company-id
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Target tenant company id for the provider connection.
+    get:
+      operationId: getBanksAccountsByIdCredentials
+      tags:
+        - Banking - Accounts
+      summary: Read encrypted provider credential status
+      description: Returns encryption metadata only; provider secrets are never returned.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    put:
+      operationId: putBanksAccountsByIdCredentials
+      tags:
+        - Banking - Accounts
+      summary: Store or rotate encrypted provider credentials
+      description: Requires a tenant admin or operator Bearer token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BankProviderCredentialsWrite"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+    delete:
+      operationId: deleteBanksAccountsByIdCredentials
+      tags:
+        - Banking - Accounts
+      summary: Remove encrypted provider credentials
+      description: Requires a tenant admin or operator Bearer token.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/accounts/{id}/health:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: x-company-id
+        in: header
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getBanksAccountsByIdHealth
+      tags:
+        - Banking - Accounts
+      summary: Return sanitized connector setup, sync, schedule and last-attempt health
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /banks/accounts/{id}/setup:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: x-company-id
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Target tenant company id for the provider connection.
+    post:
+      operationId: postBanksAccountsByIdSetup
+      tags:
+        - Banking - Accounts
+      summary: Discover and persist provider sub-accounts
+      description: Decrypts credentials only in memory and records a redacted provider audit event.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+        "502":
+          $ref: "#/components/responses/StatusResponse"
+  /banks/accounts/{id}/sync:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: x-company-id
+        in: header
+        required: true
+        schema:
+          type: string
+        description: Target tenant company id for the provider connection.
+    post:
+      operationId: postBanksAccountsByIdSync
+      tags:
+        - Banking - Accounts
+      summary: Run an idempotent manual provider transaction sync
+      description: Requires a tenant admin or operator Bearer token and deduplicates by tenant, bank and provider stamp.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BankSyncRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "402":
+          $ref: "#/components/responses/StatusResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+        "422":
+          $ref: "#/components/responses/StatusResponse"
+        "502":
+          $ref: "#/components/responses/StatusResponse"
+  /banks/transactions/export:
+    get:
+      operationId: getBanksTransactionsExport
+      tags:
+        - Banking - Transactions
+      summary: Export the filtered tenant transaction set as CSV
+      description: Uses the same allowlisted filters as the list endpoint and applies a configured row cap.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+        - name: bankCode
+          in: query
+          schema:
+            type: string
+        - name: currency
+          in: query
+          schema:
+            type: string
+        - name: subAccountKey
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: UTF-8 CSV export
+          content:
+            text/csv:
+              schema:
+                type: string
+        "413":
+          $ref: "#/components/responses/StatusResponse"
+      security:
+        - bearerAuth: []
+  /banks/transactions:
+    get:
+      operationId: getBanksTransactions
+      tags:
+        - Banking - Transactions
+      summary: List ingested bank transactions
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+        - name: pagination
+          in: query
+          schema:
+            type: string
+            enum:
+              - offset
+              - cursor
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          description: Offset mode supports up to 250; cursor mode supports up to 100.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+        - name: bankCode
+          in: query
+          description: Single bank code or comma-separated allowlist.
+          schema:
+            type: string
+        - name: currency
+          in: query
+          schema:
+            type: string
+        - name: subAccountKey
+          in: query
+          schema:
+            type: string
+        - name: incoming
+          in: query
+          schema:
+            type: boolean
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+        - name: referenceSource
+          in: query
+          schema:
+            type: string
+        - name: referenceType
+          in: query
+          schema:
+            type: string
+        - name: referenceId
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: includeAssignments
+          in: query
+          schema:
+            type: boolean
+        - name: automationStatus
+          in: query
+          schema:
+            type: string
+            enum:
+              - legacy
+              - pending
+              - processing
+              - retry
+              - completed
+              - dead
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - transactionDate
+              - fetchedAt
+              - amount
+              - balance
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+      security:
+        - bearerAuth: []
+    post:
+      operationId: postBanksTransactions
+      tags:
+        - Banking - Transactions
+      summary: Ingest bank transaction record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "402":
+          $ref: "#/components/responses/StatusResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+      security:
+        - bearerAuth: []
+  /banks/transactions/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getBanksTransactionsById
+      tags:
+        - Banking - Transactions
+      summary: Transaction detail
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+    put:
+      operationId: putBanksTransactionsById
+      tags:
+        - Banking - Transactions
+      summary: Update transaction metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+      security:
+        - bearerAuth: []
+    delete:
+      operationId: deleteBanksTransactionsById
+      tags:
+        - Banking - Transactions
+      summary: Delete transaction record
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+      security:
+        - bearerAuth: []
+  /banks/transaction-rules:
+    get:
+      operationId: getBanksTransactionRules
+      tags:
+        - Banking - Automation
+      summary: List tenant transaction rules
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+    post:
+      operationId: postBanksTransactionRules
+      tags:
+        - Banking - Automation
+      summary: Create a transaction rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionRuleCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transaction-rules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getBanksTransactionRulesById
+      tags:
+        - Banking - Automation
+      summary: Get transaction rule detail
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+    put:
+      operationId: putBanksTransactionRulesById
+      tags:
+        - Banking - Automation
+      summary: Update a rule using optimistic version locking
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionRuleUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+    delete:
+      operationId: deleteBanksTransactionRulesById
+      tags:
+        - Banking - Automation
+      summary: Archive a rule without changing existing assignments
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transaction-rules/{id}/pause:
+    patch:
+      operationId: patchBanksTransactionRulesByIdPause
+      tags:
+        - Banking - Automation
+      summary: Pause future rule evaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuleVersionRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transaction-rules/{id}/resume:
+    patch:
+      operationId: patchBanksTransactionRulesByIdResume
+      tags:
+        - Banking - Automation
+      summary: Resume future rule evaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuleVersionRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transaction-rules/{id}/preview-runs:
+    post:
+      operationId: postBanksTransactionRulesByIdPreviewRuns
+      tags:
+        - Banking - Automation
+      summary: Queue a read-only historical rule preview
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionRulePreviewRequest"
+      responses:
+        "202":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transaction-rules/{id}/backfill-runs:
+    post:
+      operationId: postBanksTransactionRulesByIdBackfillRuns
+      tags:
+        - Banking - Automation
+      summary: Queue a backfill from a completed current preview
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionRuleBackfillRequest"
+      responses:
+        "202":
+          $ref: "#/components/responses/ItemResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+  /banks/transaction-rule-runs:
+    get:
+      operationId: getBanksTransactionRuleRuns
+      tags:
+        - Banking - Automation
+      summary: List preview and backfill runs
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /banks/transaction-rule-runs/{id}:
+    get:
+      operationId: getBanksTransactionRuleRunsById
+      tags:
+        - Banking - Automation
+      summary: Get rule run progress
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /banks/transaction-rule-runs/{id}/retry:
+    post:
+      operationId: postBanksTransactionRuleRunsByIdRetry
+      tags:
+        - Banking - Automation
+      summary: Retry a failed rule run
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transaction-rule-runs/{id}/cancel:
+    post:
+      operationId: postBanksTransactionRuleRunsByIdCancel
+      tags:
+        - Banking - Automation
+      summary: Cancel a pending or running rule run
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transactions/{id}/assignments:
+    get:
+      operationId: getBanksTransactionsByIdAssignments
+      tags:
+        - Banking - Automation
+      summary: List manual and automatic transaction assignments
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+    post:
+      operationId: postBanksTransactionsByIdAssignments
+      tags:
+        - Banking - Automation
+      summary: Add or reactivate a protected manual assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionAssignmentCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/transactions/{id}/assignments/{assignmentId}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - name: assignmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: "#/components/parameters/XCompanyIdRequired"
+    put:
+      operationId: putBanksTransactionsByIdAssignmentsByAssignmentId
+      tags:
+        - Banking - Automation
+      summary: Update a manual assignment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionAssignmentWrite"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+    delete:
+      operationId: deleteBanksTransactionsByIdAssignmentsByAssignmentId
+      tags:
+        - Banking - Automation
+      summary: Delete a manual assignment
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        "409":
+          $ref: "#/components/responses/StatusResponse"
+  /banks/transactions/{id}/automation/retry:
+    post:
+      operationId: postBanksTransactionsByIdAutomationRetry
+      tags:
+        - Banking - Automation
+      summary: Retry dead or failed transaction automation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /banks/account-query-schedules:
+    get:
+      operationId: getBanksAccountQuerySchedules
+      tags:
+        - Banking - Polling
+      summary: List connector polling schedules
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+    post:
+      operationId: postBanksAccountQuerySchedules
+      tags:
+        - Banking - Polling
+      summary: Create connector polling schedule
+      description: Derives bankCode from the tenant-owned account and initializes nextRunAt.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+  /banks/account-query-schedules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getBanksAccountQuerySchedulesById
+      tags:
+        - Banking - Polling
+      summary: Polling schedule detail
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+    put:
+      operationId: putBanksAccountQuerySchedulesById
+      tags:
+        - Banking - Polling
+      summary: Update polling schedule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+    delete:
+      operationId: deleteBanksAccountQuerySchedulesById
+      tags:
+        - Banking - Polling
+      summary: Delete polling schedule
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+  /banks/account-query-schedules/{id}/pause:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      operationId: patchBanksAccountQuerySchedulesByIdPause
+      tags:
+        - Banking - Polling
+      summary: Pause polling schedule
+      description: Cancels the active schedule lease; an in-flight provider result remains idempotent.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+  /banks/account-query-schedules/{id}/resume:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    patch:
+      operationId: patchBanksAccountQuerySchedulesByIdResume
+      tags:
+        - Banking - Polling
+      summary: Resume polling schedule
+      description: Recalculates nextRunAt from the schedule timezone and timing rules.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      parameters:
+        - name: x-company-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Target tenant company id for write operation.
+  /banks/dashboard/catalog:
+    get:
+      operationId: getBanksDashboardCatalog
+      tags:
+        - Banking - Dashboard
+      summary: Return allowed dashboard DSL catalog
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "403":
+          $ref: "#/components/responses/StatusResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+  /banks/dashboard/query:
+    post:
+      operationId: postBanksDashboardQuery
+      tags:
+        - Banking - Dashboard
+      summary: Execute flexible dashboard widget query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardQueryRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "400":
+          $ref: "#/components/responses/StatusResponse"
+        "403":
+          $ref: "#/components/responses/StatusResponse"
+        "422":
+          $ref: "#/components/responses/StatusResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+  /logs/bank-request-logs:
+    get:
+      operationId: getLogsBankRequestLogs
+      tags:
+        - Audit - Connector Logs
+      summary: List bank connector request logs
+      responses:
+        "200":
+          $ref: "#/components/responses/ListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+  /logs/bank-request-logs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getLogsBankRequestLogsById
+      tags:
+        - Audit - Connector Logs
+      summary: Bank connector log detail
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      description: Default read scope includes all authorized companies when no company header is provided.
+      parameters:
+        - $ref: "#/components/parameters/XCompanyId"
+        - $ref: "#/components/parameters/XCompanyIds"
+      security:
+        - bearerAuth: []
+  /auth/login:
+    post:
+      operationId: postAuthLogin
+      tags:
+        - Identity - Auth
+      summary: Authenticate user and issue token pair
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/XAuthMode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "401":
+          $ref: "#/components/responses/StatusResponse"
+  /auth/refresh:
+    post:
+      operationId: postAuthRefresh
+      tags:
+        - Identity - Auth
+      summary: Rotate refresh token and issue new access token
+      security:
+        - {}
+        - refreshCookie: []
+      description: Accepts refreshToken in the body for non-browser clients or the HttpOnly refresh cookie for web clients.
+      parameters:
+        - $ref: "#/components/parameters/XAuthMode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRefreshRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "401":
+          $ref: "#/components/responses/StatusResponse"
+  /auth/logout:
+    post:
+      operationId: postAuthLogout
+      tags:
+        - Identity - Auth
+      summary: Revoke refresh token session
+      security:
+        - {}
+        - refreshCookie: []
+      description: Accepts refreshToken in the body or revokes and clears the HttpOnly refresh cookie.
+      parameters:
+        - $ref: "#/components/parameters/XAuthMode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLogoutRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /auth/me:
+    get:
+      operationId: getAuthMe
+      tags:
+        - Identity - Auth
+      summary: Hydrate the authenticated user and company memberships
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "401":
+          $ref: "#/components/responses/StatusResponse"
+      security:
+        - bearerAuth: []
+    patch:
+      operationId: patchAuthMe
+      tags:
+        - Identity - Auth
+      summary: Update the authenticated user profile and access policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthProfileUpdateRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "400":
+          $ref: "#/components/responses/StatusResponse"
+        "401":
+          $ref: "#/components/responses/StatusResponse"
+      security:
+        - bearerAuth: []
+  /auth/change-password:
+    post:
+      operationId: postAuthChangePassword
+      tags:
+        - Identity - Auth
+      summary: Change the authenticated user password and revoke refresh sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthChangePasswordRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "400":
+          $ref: "#/components/responses/StatusResponse"
+        "401":
+          $ref: "#/components/responses/StatusResponse"
+      security:
+        - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: tahsil_refresh
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    XCompanyId:
+      name: x-company-id
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Target tenant company id. Required for write operations on customer banking endpoints.
+    XCompanyIdRequired:
+      name: x-company-id
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Target tenant company id for a write operation.
+    XCompanyIds:
+      name: x-company-ids
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Optional comma-separated company ids for read scope filtering. If omitted, all authorized companies are used.
+    XAuthMode:
+      name: x-auth-mode
+      in: header
+      required: false
+      schema:
+        type: string
+        enum:
+          - cookie
+      description: Set to cookie for browser sessions. The refresh token is stored in an HttpOnly cookie and omitted from JSON.
+  responses:
+    ErrorResponse:
+      description: Request failed
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: boolean
+                const: false
+              error:
+                type: object
+                additionalProperties: true
+          example:
+            status: false
+            error:
+              code: AUTHENTICATION_REQUIRED
+              message: Authentication is required
+    StatusResponse:
+      description: Operation completed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: boolean
+          example:
+            status: true
+    ItemResponse:
+      description: Single entity response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: boolean
+              result:
+                type: object
+                additionalProperties: true
+          example:
+            status: true
+            result:
+              id: 64f000000000000000000001
+    ListResponse:
+      description: Paginated list response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: boolean
+              result:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+              paginate:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  size:
+                    type: integer
+                  page:
+                    type: integer
+                  totalPage:
+                    type: integer
+          example:
+            status: true
+            result: []
+            paginate:
+              total: 0
+              size: 25
+              page: 1
+              totalPage: 0
+  schemas:
+    AccessPolicy:
+      type: object
+      properties:
+        ip:
+          $ref: "#/components/schemas/AccessPolicyIp"
+        time:
+          $ref: "#/components/schemas/AccessPolicyTime"
+    AccessPolicyIp:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        allowList:
+          type: array
+          items:
+            type: string
+            description: IP address or CIDR notation (IPv4/IPv6), e.g. 203.0.113.10 or 203.0.113.0/24
+    AccessPolicyTime:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        timezone:
+          type:
+            - string
+            - "null"
+          example: Europe/Istanbul
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessPolicyWindow"
+    AccessPolicyWindow:
+      type: object
+      required:
+        - days
+        - startTime
+        - endTime
+      properties:
+        days:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Weekday indexes, 0 Sunday ... 6 Saturday
+        startTime:
+          type: string
+          example: "09:00"
+        endTime:
+          type: string
+          example: "18:00"
+    BankProviderCredentialsWrite:
+      type: object
+      required:
+        - credentials
+      properties:
+        credentials:
+          type: object
+          writeOnly: true
+          minProperties: 1
+          maxProperties: 100
+          additionalProperties: true
+          description: Bank-specific provider credential payload encrypted at rest with AES-256-GCM. New clients must send startDate and endDate in BankSyncRequest instead; legacy stored dates are used only by manual sync and are ignored by schedules.
+    BankSyncRequest:
+      type: object
+      additionalProperties: false
+      example:
+        startDate: "2026-07-01"
+        endDate: "2026-07-15"
+      properties:
+        startDate:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Optional inclusive provider query start date.
+        endDate:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Optional inclusive provider query end date; must not precede startDate.
+    BankAccountCreate:
+      type: object
+      required:
+        - bankCode
+        - title
+      example:
+        bankCode: akbank
+        title: Ana tahsilat hesabı
+      properties:
+        bankCode:
+          type: string
+        title:
+          type: string
+    BankAccountUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: boolean
+    TransactionCreate:
+      type: object
+      required:
+        - version
+        - providerStamp
+        - idNo
+        - findAI
+        - incoming
+        - amount
+        - balance
+        - bankCode
+      example:
+        version: "1"
+        providerStamp: DEMO-20260715-0001
+        idNo: "11111111111"
+        findAI: false
+        incoming: true
+        amount: 1250.5
+        balance: 28750.5
+        bankCode: demo
+      properties:
+        accountId:
+          type:
+            - string
+            - "null"
+        subAccountKey:
+          type:
+            - string
+            - "null"
+        version:
+          type: string
+        providerStamp:
+          type: string
+          description: Immutable provider idempotency key, including the bank-specific prefix.
+        stamp:
+          type: string
+          format: date-time
+          deprecated: true
+          description: Legacy fetch timestamp; use fetchedAt for new records.
+        transactionDate:
+          type:
+            - string
+            - "null"
+          format: date-time
+        fetchedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        idNo:
+          type: string
+        findAI:
+          type: boolean
+        incoming:
+          type: boolean
+        amount:
+          type: number
+        balance:
+          type: number
+        bankCode:
+          type: string
+    TransactionUpdate:
+      type: object
+      properties:
+        transactionDate:
+          type:
+            - string
+            - "null"
+          format: date-time
+        fetchedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        description:
+          type:
+            - string
+            - "null"
+        findAI:
+          type: boolean
+        status:
+          type: boolean
+    ExternalReference:
+      type: object
+      required:
+        - source
+        - entityType
+        - externalId
+      properties:
+        source:
+          type: string
+          maxLength: 64
+          pattern: ^[a-z0-9][a-z0-9_-]{0,63}$
+        entityType:
+          type: string
+          maxLength: 64
+          pattern: ^[a-z0-9][a-z0-9_-]{0,63}$
+        externalId:
+          type: string
+          maxLength: 256
+        label:
+          type:
+            - string
+            - "null"
+          maxLength: 200
+    TransactionRuleCondition:
+      type: object
+      required:
+        - field
+        - operator
+        - value
+      properties:
+        field:
+          type: string
+          enum:
+            - bankCode
+            - accountId
+            - subAccountKey
+            - currency
+            - incoming
+            - amount
+            - balance
+            - description
+            - nameSurname
+            - iban
+            - idNo
+            - code
+            - transactionDate
+            - fetchedAt
+        operator:
+          type: string
+          enum:
+            - equals
+            - not_equals
+            - contains
+            - not_contains
+            - starts_with
+            - ends_with
+            - in
+            - exists
+            - gt
+            - gte
+            - lt
+            - lte
+            - between
+        value: {}
+    TransactionRuleConditionGroup:
+      type: object
+      required:
+        - combinator
+        - children
+      properties:
+        combinator:
+          type: string
+          enum:
+            - all
+            - any
+        children:
+          type: array
+          minItems: 1
+          maxItems: 25
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/TransactionRuleCondition"
+              - $ref: "#/components/schemas/TransactionRuleConditionGroup"
+    TransactionRuleAction:
+      oneOf:
+        - type: object
+          required:
+            - type
+            - reference
+          properties:
+            id:
+              type: string
+              readOnly: true
+            type:
+              const: attach_reference
+            reference:
+              $ref: "#/components/schemas/ExternalReference"
+        - type: object
+          required:
+            - type
+            - values
+          properties:
+            id:
+              type: string
+              readOnly: true
+            type:
+              const: add_tags
+            values:
+              type: array
+              maxItems: 20
+              items:
+                type: string
+                maxLength: 50
+    TransactionRuleCreate:
+      type: object
+      required:
+        - name
+        - conditions
+        - actions
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type:
+            - string
+            - "null"
+          maxLength: 500
+        status:
+          type: string
+          enum:
+            - active
+            - paused
+        effectiveFrom:
+          type: string
+          format: date-time
+        conditions:
+          $ref: "#/components/schemas/TransactionRuleConditionGroup"
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            $ref: "#/components/schemas/TransactionRuleAction"
+    TransactionRuleUpdate:
+      type: object
+      required:
+        - version
+      minProperties: 2
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type:
+            - string
+            - "null"
+          maxLength: 500
+        status:
+          type: string
+          enum:
+            - active
+            - paused
+        effectiveFrom:
+          type: string
+          format: date-time
+        conditions:
+          $ref: "#/components/schemas/TransactionRuleConditionGroup"
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            $ref: "#/components/schemas/TransactionRuleAction"
+    RuleVersionRequest:
+      type: object
+      required:
+        - version
+      properties:
+        version:
+          type: integer
+          minimum: 1
+    TransactionRuleRunScope:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        accountIds:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+        bankCodes:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+    TransactionRulePreviewRequest:
+      type: object
+      properties:
+        scope:
+          $ref: "#/components/schemas/TransactionRuleRunScope"
+    TransactionRuleBackfillRequest:
+      type: object
+      required:
+        - previewRunId
+      properties:
+        previewRunId:
+          type: string
+    TransactionAssignmentWrite:
+      type: object
+      properties:
+        reference:
+          $ref: "#/components/schemas/ExternalReference"
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 50
+    TransactionAssignmentCreate:
+      allOf:
+        - $ref: "#/components/schemas/TransactionAssignmentWrite"
+        - type: object
+          required:
+            - reference
+    ScheduleWindow:
+      type: object
+      required:
+        - days
+        - startTime
+        - endTime
+        - intervalMinutes
+      properties:
+        days:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        startTime:
+          type: string
+          example: "09:00"
+        endTime:
+          type: string
+          example: "18:00"
+        intervalMinutes:
+          type: integer
+    ScheduleCreate:
+      type: object
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+        mode:
+          type: string
+          enum:
+            - interval
+            - windowed
+        timezone:
+          type: string
+        intervalMinutes:
+          type: integer
+        windowRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleWindow"
+        jitterSeconds:
+          type: integer
+        nextRunAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        status:
+          type: boolean
+    ScheduleUpdate:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+            - interval
+            - windowed
+        timezone:
+          type: string
+        intervalMinutes:
+          type: integer
+        windowRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleWindow"
+        jitterSeconds:
+          type: integer
+        nextRunAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        status:
+          type: boolean
+    DashboardRange:
+      type: object
+      properties:
+        preset:
+          type: string
+          enum:
+            - last_7d
+            - last_30d
+            - today
+            - custom
+        from:
+          type:
+            - string
+            - "null"
+          format: date-time
+        to:
+          type:
+            - string
+            - "null"
+          format: date-time
+        timezone:
+          type:
+            - string
+            - "null"
+    DashboardFilters:
+      type: object
+      properties:
+        bankCode:
+          type: array
+          items:
+            type: string
+        currency:
+          type: array
+          items:
+            type: string
+        incoming:
+          type: boolean
+        accountId:
+          type: array
+          items:
+            type: string
+        subAccountKey:
+          type: array
+          items:
+            type: string
+        amountMin:
+          type: number
+        amountMax:
+          type: number
+    DashboardSort:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          type: string
+        direction:
+          type: string
+          enum:
+            - asc
+            - desc
+    DashboardQueryRequest:
+      type: object
+      required:
+        - range
+        - metrics
+      example:
+        range:
+          preset: last_30d
+          timezone: Europe/Istanbul
+        groupBy:
+          - currency
+        metrics:
+          - count
+          - sum(amount)
+        limit: 20
+      properties:
+        range:
+          $ref: "#/components/schemas/DashboardRange"
+        filters:
+          $ref: "#/components/schemas/DashboardFilters"
+        groupBy:
+          type: array
+          items:
+            type: string
+            enum:
+              - bankCode
+              - subAccountKey
+              - currency
+              - incoming
+              - transactionDate:day
+              - transactionDate:week
+              - transactionDate:month
+              - descriptionBucket
+        metrics:
+          type: array
+          items:
+            type: string
+            enum:
+              - count
+              - sum(amount)
+              - sum(balance)
+              - avg(amount)
+              - max(amount)
+              - min(amount)
+        sort:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardSort"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+    AuthLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      example:
+        email: developer@example.com
+        password: example-password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+    AuthRefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+        companyId:
+          type:
+            - string
+            - "null"
+    AuthLogoutRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    AuthProfileUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        fullName:
+          type: string
+        phone:
+          type:
+            - string
+            - "null"
+        accessPolicy:
+          $ref: "#/components/schemas/AccessPolicy"
+    AuthChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          format: password
+          minLength: 10

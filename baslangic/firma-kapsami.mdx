@@ -1,0 +1,26 @@
+---
+title: "Firma kapsamı"
+description: "x-company-id ve x-company-ids header kuralları."
+icon: "building"
+---
+
+Firma kapsamı request body içinden değil, doğrulanmış kimlik ve header'lar üzerinden sunucu tarafından belirlenir.
+
+| Senaryo | Header | Davranış |
+| --- | --- | --- |
+| Bearer read, header yok | — | Kullanıcının yetkili olduğu bütün firmalar |
+| Bearer tek firma read | `x-company-id` | Seçili firma |
+| Bearer çoklu firma read | `x-company-ids: id1,id2` | Seçili yetkili firmalar |
+| Her write işlemi | `x-company-id` | Zorunlu tek hedef firma |
+| Profil ve membership | — | Kullanıcının erişebildiği firmaları döndürür |
+
+Yetkisiz firma seçimi `403`, write çağrısında `x-company-id` eksikliği `400` döndürür.
+
+```bash
+curl --request POST \
+  --url https://api.tahsil.dev/banks/accounts \
+  --header "authorization: Bearer $TAHSIL_ACCESS_TOKEN" \
+  --header "x-company-id: $TAHSIL_COMPANY_ID" \
+  --header 'content-type: application/json' \
+  --data '{"bankCode":"akbank","title":"Ana tahsilat hesabı"}'
+```
