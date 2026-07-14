@@ -27,3 +27,11 @@ This public repository contains only the Mintlify documentation for Tahsil custo
 ## Verification
 
 Run `npm run ci` before committing. The content guard must report exactly 57 customer operations and reject private platform or special integration shapes.
+
+## Server contract synchronization
+
+- The canonical local customer contract is `../core/server/project/docs/openapi.yaml`.
+- After every reviewed change to that file, run `npm run sync:openapi:local` in this repository before either repository is committed.
+- Update `degisiklikler.mdx` in the same change with a customer-readable date entry. Separate added, changed, deprecated, removed, and security-relevant behavior when applicable; do not copy internal implementation details.
+- If the customer operation count changes intentionally, update the exact-count guards in `scripts/sync-openapi.mjs` and `scripts/check-content.mjs` only after confirming that no platform, bootstrap, or special integration operation entered the snapshot.
+- Run `npm run ci` after synchronization. Server and documentation repositories remain separate Git histories and must be committed independently.

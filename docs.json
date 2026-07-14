@@ -9,11 +9,11 @@
     "dark": "#141414"
   },
   "logo": {
-    "light": "/logo/favicon.svg",
-    "dark": "/logo/favicon.svg",
+    "light": "/logo/tahsil-icon.svg",
+    "dark": "/logo/tahsil-badge.png",
     "href": "/"
   },
-  "favicon": "/logo/favicon.svg",
+  "favicon": "/logo/tahsil-badge.png",
   "appearance": {
     "default": "system",
     "strict": false
@@ -113,8 +113,8 @@
   "navbar": {
     "primary": {
       "type": "button",
-      "label": "API durumu",
-      "href": "https://api.tahsil.dev/health"
+      "label": "Tahsil'i Dene",
+      "href": "https://tahsil.pro"
     }
   },
   "footer": {

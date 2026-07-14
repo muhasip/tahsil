@@ -10,6 +10,7 @@
     "check:content": "node scripts/check-content.mjs",
     "apply:playground": "node scripts/apply-playground-policy.mjs",
     "sync:openapi": "node scripts/sync-openapi.mjs",
+    "sync:openapi:local": "TAHSIL_OPENAPI_FILE=../core/server/project/docs/openapi.yaml node scripts/sync-openapi.mjs",
     "ci": "npm run check:openapi && npm run check:content && npm run validate"
   },
   "engines": {

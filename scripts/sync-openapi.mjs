@@ -2,16 +2,23 @@ import { readFile, writeFile } from 'node:fs/promises';
 import YAML from 'yaml';
 import { applyPlaygroundPolicy, countPlaygroundModes } from './lib/playground-policy.mjs';
 
+const sourceFile = process.env.TAHSIL_OPENAPI_FILE;
 const source = process.env.TAHSIL_OPENAPI_URL ?? 'https://api.tahsil.dev/openapi';
 const target = new URL('../openapi/openapi.yaml', import.meta.url);
 
-const response = await fetch(source, {
-  headers: { accept: 'application/yaml, text/yaml, application/json' },
-  signal: AbortSignal.timeout(30_000),
-});
-if (!response.ok) throw new Error(`OpenAPI indirilemedi: HTTP ${response.status}`);
+let sourceText;
+if (sourceFile) {
+  sourceText = await readFile(sourceFile, 'utf8');
+} else {
+  const response = await fetch(source, {
+    headers: { accept: 'application/yaml, text/yaml, application/json' },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) throw new Error(`OpenAPI indirilemedi: HTTP ${response.status}`);
+  sourceText = await response.text();
+}
 
-const document = YAML.parse(await response.text());
+const document = YAML.parse(sourceText);
 if (document?.openapi !== '3.1.0' || !document?.paths) {
   throw new Error('Beklenen OpenAPI 3.1 kullanıcı sözleşmesi alınamadı');
 }
@@ -40,12 +47,12 @@ const next = YAML.stringify(document, { lineWidth: 100 });
 const current = await readFile(target, 'utf8').catch(() => '');
 if (next === current) {
   console.log(
-    `OpenAPI güncel (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek).`,
+    `OpenAPI güncel (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek; kaynak: ${sourceFile ?? source}).`,
   );
   process.exit(0);
 }
 
 await writeFile(target, next);
 console.log(
-  `OpenAPI güncellendi (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek).`,
+  `OpenAPI güncellendi (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek; kaynak: ${sourceFile ?? source}).`,
 );

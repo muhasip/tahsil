@@ -31,3 +31,12 @@ npm run ci
 ```
 
 Senkronizasyon kaynağı production `/openapi` müşteri sözleşmesidir. Değişiklikler otomatik olarak ayrı bir pull request ile önerilir.
+
+Server ile aynı çalışma alanında, production deploy'unu beklemeden kanonik müşteri sözleşmesini almak için:
+
+```bash
+npm run sync:openapi:local
+npm run ci
+```
+
+Her sözleşme değişikliği aynı pull request veya yayın grubunda `degisiklikler.mdx` müşteri changelog'una da yazılır.
