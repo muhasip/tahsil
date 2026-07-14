@@ -2,7 +2,8 @@
 
 Tahsil web ve mobil uygulamalarının kullandığı normal kullanıcı API'si için public Mintlify dokümantasyon reposu.
 
-- Yayın: https://tahsil.mintlify.site
+- Kanonik yayın: https://tahsil.dev
+- Mintlify yayın adresi: https://tahsil.mintlify.site
 - API: https://api.tahsil.dev
 - Sözleşme: `openapi/openapi.yaml` (57 müşteri operasyonu)
 

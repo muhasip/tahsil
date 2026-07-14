@@ -9,11 +9,16 @@
     "dark": "#141414"
   },
   "logo": {
-    "light": "/logo/tahsil-icon.svg",
-    "dark": "/logo/tahsil-badge.png",
+    "light": "/logo/icon-dark.png",
+    "dark": "/logo/icon-light.png",
     "href": "/"
   },
   "favicon": "/logo/tahsil-badge.png",
+  "seo": {
+    "metatags": {
+      "canonical": "https://tahsil.dev"
+    }
+  },
   "appearance": {
     "default": "system",
     "strict": false
