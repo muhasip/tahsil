@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import YAML from 'yaml';
+import { countPlaygroundModes, isInteractiveOperation } from './lib/playground-policy.mjs';
 
 const forbidden = [
   /prov\.tahsil\.dev/i,
@@ -51,9 +52,17 @@ for (const file of files) {
 const openapiPath = new URL('../openapi/openapi.yaml', import.meta.url);
 const document = YAML.parse(await readFile(openapiPath, 'utf8'));
 let operationCount = 0;
-for (const pathItem of Object.values(document.paths ?? {})) {
+for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
   for (const method of ['get', 'post', 'put', 'patch', 'delete']) {
-    if (pathItem?.[method]) operationCount += 1;
+    const operation = pathItem?.[method];
+    if (!operation) continue;
+    operationCount += 1;
+
+    const expected = isInteractiveOperation(method, path) ? 'interactive' : 'simple';
+    const actual = operation['x-mint']?.metadata?.playground;
+    if (actual !== expected) {
+      throw new Error(`Playground politikası hatalı: ${method.toUpperCase()} ${path} (${actual ?? 'yok'})`);
+    }
   }
 }
 
@@ -71,4 +80,7 @@ if (document.components?.securitySchemes?.apiSecretAuth) {
   throw new Error('Özel entegrasyon credential şeması müşteri sözleşmesine sızdı');
 }
 
-console.log(`İçerik ve müşteri API sınırı doğrulandı (${operationCount} operasyon).`);
+const playgroundCounts = countPlaygroundModes(document);
+console.log(
+  `İçerik ve müşteri API sınırı doğrulandı (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek).`,
+);

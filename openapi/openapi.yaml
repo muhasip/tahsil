@@ -38,6 +38,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: interactive
   /ready:
     get:
       operationId: getReady
@@ -52,6 +55,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/usage:
     get:
       operationId: getBanksUsage
@@ -79,6 +85,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/accounts:
     get:
       operationId: getBanksAccounts
@@ -96,12 +105,16 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     post:
       operationId: postBanksAccounts
       tags:
         - Banking - Accounts
       summary: Register one bank connection for the tenant
-      description: A tenant can register a bank code once. Currency and physical accounts are discovered by provider setup and returned as subAccounts.
+      description: A tenant can register a bank code once. Currency and physical accounts are discovered
+        by provider setup and returned as subAccounts.
       requestBody:
         required: true
         content:
@@ -124,6 +137,9 @@ paths:
           description: Target tenant company id for write operation.
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
   /banks/accounts/{id}:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -143,6 +159,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     put:
       operationId: putBanksAccountsById
       tags:
@@ -168,6 +187,9 @@ paths:
           description: Target tenant company id for write operation.
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
     delete:
       operationId: deleteBanksAccountsById
       tags:
@@ -187,13 +209,17 @@ paths:
           description: Target tenant company id for write operation.
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
   /banks/provider/variables:
     get:
       operationId: getBanksProviderVariables
       tags:
         - Banking - Accounts
       summary: List normalized provider connection field metadata
-      description: Returns field definitions only; provider credential values are never returned. Date fields are transaction query controls, not stored credentials.
+      description: Returns field definitions only; provider credential values are never returned. Date
+        fields are transaction query controls, not stored credentials.
       security:
         - bearerAuth: []
       responses:
@@ -203,6 +229,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         "502":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/provider/variables/{bankCode}:
     parameters:
       - name: bankCode
@@ -215,7 +244,8 @@ paths:
       tags:
         - Banking - Accounts
       summary: Read normalized provider connection field metadata for a bank
-      description: Requires a tenant admin or operator Bearer token and proxies metadata through Core without exposing the provider envelope.
+      description: Requires a tenant admin or operator Bearer token and proxies metadata through Core
+        without exposing the provider envelope.
       security:
         - bearerAuth: []
       responses:
@@ -229,6 +259,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         "502":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/accounts/{id}/credentials:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -251,6 +284,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: interactive
     put:
       operationId: putBanksAccountsByIdCredentials
       tags:
@@ -270,6 +306,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
     delete:
       operationId: deleteBanksAccountsByIdCredentials
       tags:
@@ -283,6 +322,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/accounts/{id}/health:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -303,6 +345,9 @@ paths:
           $ref: "#/components/responses/ErrorResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/accounts/{id}/setup:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -327,6 +372,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         "502":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/accounts/{id}/sync:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -341,7 +389,8 @@ paths:
       tags:
         - Banking - Accounts
       summary: Run an idempotent manual provider transaction sync
-      description: Requires a tenant admin or operator Bearer token and deduplicates by tenant, bank and provider stamp.
+      description: Requires a tenant admin or operator Bearer token and deduplicates by tenant, bank and
+        provider stamp.
       security:
         - bearerAuth: []
       requestBody:
@@ -361,6 +410,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         "502":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transactions/export:
     get:
       operationId: getBanksTransactionsExport
@@ -404,6 +456,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/transactions:
     get:
       operationId: getBanksTransactions
@@ -518,6 +573,9 @@ paths:
               - desc
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     post:
       operationId: postBanksTransactions
       tags:
@@ -543,6 +601,9 @@ paths:
           description: Target tenant company id for write operation.
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transactions/{id}:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -562,6 +623,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     put:
       operationId: putBanksTransactionsById
       tags:
@@ -587,6 +651,9 @@ paths:
           description: Target tenant company id for write operation.
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
     delete:
       operationId: deleteBanksTransactionsById
       tags:
@@ -606,6 +673,9 @@ paths:
           description: Target tenant company id for write operation.
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rules:
     get:
       operationId: getBanksTransactionRules
@@ -622,6 +692,9 @@ paths:
           $ref: "#/components/responses/ErrorResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     post:
       operationId: postBanksTransactionRules
       tags:
@@ -642,6 +715,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rules/{id}:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -660,6 +736,9 @@ paths:
           $ref: "#/components/responses/ErrorResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     put:
       operationId: putBanksTransactionRulesById
       tags:
@@ -680,6 +759,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         "409":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
     delete:
       operationId: deleteBanksTransactionRulesById
       tags:
@@ -700,6 +782,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rules/{id}/pause:
     patch:
       operationId: patchBanksTransactionRulesByIdPause
@@ -722,6 +807,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rules/{id}/resume:
     patch:
       operationId: patchBanksTransactionRulesByIdResume
@@ -744,6 +832,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rules/{id}/preview-runs:
     post:
       operationId: postBanksTransactionRulesByIdPreviewRuns
@@ -765,6 +856,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rules/{id}/backfill-runs:
     post:
       operationId: postBanksTransactionRulesByIdBackfillRuns
@@ -787,6 +881,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         "409":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rule-runs:
     get:
       operationId: getBanksTransactionRuleRuns
@@ -803,6 +900,9 @@ paths:
           $ref: "#/components/responses/ErrorResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/transaction-rule-runs/{id}:
     get:
       operationId: getBanksTransactionRuleRunsById
@@ -820,6 +920,9 @@ paths:
           $ref: "#/components/responses/ErrorResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/transaction-rule-runs/{id}/retry:
     post:
       operationId: postBanksTransactionRuleRunsByIdRetry
@@ -836,6 +939,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transaction-rule-runs/{id}/cancel:
     post:
       operationId: postBanksTransactionRuleRunsByIdCancel
@@ -852,6 +958,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transactions/{id}/assignments:
     get:
       operationId: getBanksTransactionsByIdAssignments
@@ -869,6 +978,9 @@ paths:
           $ref: "#/components/responses/ErrorResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     post:
       operationId: postBanksTransactionsByIdAssignments
       tags:
@@ -890,6 +1002,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transactions/{id}/assignments/{assignmentId}:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -917,6 +1032,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         "409":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
     delete:
       operationId: deleteBanksTransactionsByIdAssignmentsByAssignmentId
       tags:
@@ -929,6 +1047,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         "409":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/transactions/{id}/automation/retry:
     post:
       operationId: postBanksTransactionsByIdAutomationRetry
@@ -945,6 +1066,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /banks/account-query-schedules:
     get:
       operationId: getBanksAccountQuerySchedules
@@ -962,6 +1086,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     post:
       operationId: postBanksAccountQuerySchedules
       tags:
@@ -988,6 +1115,9 @@ paths:
           schema:
             type: string
           description: Target tenant company id for write operation.
+      x-mint:
+        metadata:
+          playground: simple
   /banks/account-query-schedules/{id}:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -1007,6 +1137,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     put:
       operationId: putBanksAccountQuerySchedulesById
       tags:
@@ -1032,6 +1165,9 @@ paths:
           schema:
             type: string
           description: Target tenant company id for write operation.
+      x-mint:
+        metadata:
+          playground: simple
     delete:
       operationId: deleteBanksAccountQuerySchedulesById
       tags:
@@ -1051,6 +1187,9 @@ paths:
           schema:
             type: string
           description: Target tenant company id for write operation.
+      x-mint:
+        metadata:
+          playground: simple
   /banks/account-query-schedules/{id}/pause:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -1074,6 +1213,9 @@ paths:
           schema:
             type: string
           description: Target tenant company id for write operation.
+      x-mint:
+        metadata:
+          playground: simple
   /banks/account-query-schedules/{id}/resume:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -1097,6 +1239,9 @@ paths:
           schema:
             type: string
           description: Target tenant company id for write operation.
+      x-mint:
+        metadata:
+          playground: simple
   /banks/dashboard/catalog:
     get:
       operationId: getBanksDashboardCatalog
@@ -1114,6 +1259,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /banks/dashboard/query:
     post:
       operationId: postBanksDashboardQuery
@@ -1141,6 +1289,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /logs/bank-request-logs:
     get:
       operationId: getLogsBankRequestLogs
@@ -1158,6 +1309,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /logs/bank-request-logs/{id}:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -1177,6 +1331,9 @@ paths:
         - $ref: "#/components/parameters/XCompanyIds"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
   /auth/login:
     post:
       operationId: postAuthLogin
@@ -1197,6 +1354,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         "401":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /auth/refresh:
     post:
       operationId: postAuthRefresh
@@ -1206,7 +1366,8 @@ paths:
       security:
         - {}
         - refreshCookie: []
-      description: Accepts refreshToken in the body for non-browser clients or the HttpOnly refresh cookie for web clients.
+      description: Accepts refreshToken in the body for non-browser clients or the HttpOnly refresh cookie
+        for web clients.
       parameters:
         - $ref: "#/components/parameters/XAuthMode"
       requestBody:
@@ -1220,6 +1381,9 @@ paths:
           $ref: "#/components/responses/ItemResponse"
         "401":
           $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /auth/logout:
     post:
       operationId: postAuthLogout
@@ -1243,6 +1407,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
         default:
           $ref: "#/components/responses/ErrorResponse"
+      x-mint:
+        metadata:
+          playground: simple
   /auth/me:
     get:
       operationId: getAuthMe
@@ -1256,6 +1423,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: interactive
     patch:
       operationId: patchAuthMe
       tags:
@@ -1276,6 +1446,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
   /auth/change-password:
     post:
       operationId: postAuthChangePassword
@@ -1297,6 +1470,9 @@ paths:
           $ref: "#/components/responses/StatusResponse"
       security:
         - bearerAuth: []
+      x-mint:
+        metadata:
+          playground: simple
 components:
   securitySchemes:
     bearerAuth:
@@ -1334,7 +1510,8 @@ components:
       required: false
       schema:
         type: string
-      description: Optional comma-separated company ids for read scope filtering. If omitted, all authorized companies are used.
+      description: Optional comma-separated company ids for read scope filtering. If omitted, all
+        authorized companies are used.
     XAuthMode:
       name: x-auth-mode
       in: header
@@ -1343,7 +1520,8 @@ components:
         type: string
         enum:
           - cookie
-      description: Set to cookie for browser sessions. The refresh token is stored in an HttpOnly cookie and omitted from JSON.
+      description: Set to cookie for browser sessions. The refresh token is stored in an HttpOnly cookie
+        and omitted from JSON.
   responses:
     ErrorResponse:
       description: Request failed
@@ -1473,10 +1651,10 @@ components:
           description: Weekday indexes, 0 Sunday ... 6 Saturday
         startTime:
           type: string
-          example: "09:00"
+          example: 09:00
         endTime:
           type: string
-          example: "18:00"
+          example: 18:00
     BankProviderCredentialsWrite:
       type: object
       required:
@@ -1488,13 +1666,15 @@ components:
           minProperties: 1
           maxProperties: 100
           additionalProperties: true
-          description: Bank-specific provider credential payload encrypted at rest with AES-256-GCM. New clients must send startDate and endDate in BankSyncRequest instead; legacy stored dates are used only by manual sync and are ignored by schedules.
+          description: Bank-specific provider credential payload encrypted at rest with AES-256-GCM. New
+            clients must send startDate and endDate in BankSyncRequest instead; legacy stored dates
+            are used only by manual sync and are ignored by schedules.
     BankSyncRequest:
       type: object
       additionalProperties: false
       example:
-        startDate: "2026-07-01"
-        endDate: "2026-07-15"
+        startDate: 2026-07-01
+        endDate: 2026-07-15
       properties:
         startDate:
           type: string
@@ -1857,10 +2037,10 @@ components:
             maximum: 6
         startTime:
           type: string
-          example: "09:00"
+          example: 09:00
         endTime:
           type: string
-          example: "18:00"
+          example: 18:00
         intervalMinutes:
           type: integer
     ScheduleCreate:

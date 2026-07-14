@@ -1,22 +1,25 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "palm",
+  "theme": "almond",
   "name": "Tahsil Developers",
   "description": "Tahsil kullanıcı API dokümantasyonu",
   "colors": {
-    "primary": "#059669",
-    "light": "#34D399",
-    "dark": "#047857"
+    "primary": "#141414",
+    "light": "#FAFAFA",
+    "dark": "#141414"
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg",
+    "light": "/logo/favicon.svg",
+    "dark": "/logo/favicon.svg",
     "href": "/"
   },
   "favicon": "/logo/favicon.svg",
   "appearance": {
     "default": "system",
     "strict": false
+  },
+  "interaction": {
+    "drilldown": false
   },
   "styling": {
     "eyebrows": "breadcrumbs",
@@ -108,16 +111,10 @@
     ]
   },
   "navbar": {
-    "links": [
-      {
-        "label": "API durumu",
-        "href": "https://api.tahsil.dev/health"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "API referansı",
-      "href": "/api-reference"
+      "label": "API durumu",
+      "href": "https://api.tahsil.dev/health"
     }
   },
   "footer": {

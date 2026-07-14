@@ -1,6 +1,6 @@
 ---
 title: "Kimlik doğrulama"
-description: "Bearer oturumu ile API key ve secret akışlarının doğru kullanımı."
+description: "Müşteri API'sinde Bearer access token kullanımını güvenli biçimde uygulayın."
 icon: "key"
 ---
 
@@ -26,6 +26,12 @@ Authorization: Bearer eyJ...
 Web oturumlarında `x-auth-mode: cookie` gönderildiğinde refresh token `HttpOnly` cookie içinde tutulur. İstemci `credentials: include` kullanmalı; sayfa yenilemede önce `/auth/refresh`, sonra `/auth/me` çağrılmalıdır.
 
 Access token yalnız uygulama belleğinde tutulur. Refresh token, access token, parola ve banka credential değerlerini localStorage, log veya analytics içine yazmayın.
+
+## API referansında canlı test
+
+Salt okunur bir endpoint sayfasında **Test Request** bölümünü açın ve yalnız kısa ömürlü access token'ı Bearer alanına girin. İstek doğrudan `api.tahsil.dev` adresine gider; Mintlify proxy'si kullanılmaz.
+
+Test bittiğinde token alanını temizleyin ve sekmeyi kapatın. Login, refresh, logout, parola değişikliği ve veri değiştiren tüm operasyonlar canlı çalıştırmaya kapalıdır.
 
 ## Çıkış
 

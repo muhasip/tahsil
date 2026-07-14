@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import YAML from 'yaml';
+import { applyPlaygroundPolicy, countPlaygroundModes } from './lib/playground-policy.mjs';
 
 const source = process.env.TAHSIL_OPENAPI_URL ?? 'https://api.tahsil.dev/openapi';
 const target = new URL('../openapi/openapi.yaml', import.meta.url);
@@ -32,12 +33,19 @@ if (document.components?.securitySchemes?.apiSecretAuth) {
   throw new Error('Özel entegrasyon credential şeması müşteri sözleşmesine sızdı');
 }
 
+applyPlaygroundPolicy(document);
+const playgroundCounts = countPlaygroundModes(document);
+
 const next = YAML.stringify(document, { lineWidth: 100 });
 const current = await readFile(target, 'utf8').catch(() => '');
 if (next === current) {
-  console.log(`OpenAPI güncel (${operationCount} operasyon).`);
+  console.log(
+    `OpenAPI güncel (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek).`,
+  );
   process.exit(0);
 }
 
 await writeFile(target, next);
-console.log(`OpenAPI güncellendi (${operationCount} operasyon).`);
+console.log(
+  `OpenAPI güncellendi (${operationCount} operasyon; ${playgroundCounts.interactive} canlı, ${playgroundCounts.simple} salt örnek).`,
+);
