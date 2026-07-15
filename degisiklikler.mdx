@@ -5,6 +5,17 @@ description: Tahsil kullanıcı API'si ve developer portalı yayın notları.
 
 ## 15 Temmuz 2026
 
+- **Eklendi:** Aynı firma aynı bankaya birden fazla bağımsız bağlantı
+  ekleyebilir. Bağlantılar `demo` veya `production` ortamıyla oluşturulur.
+- **Değişti:** Banka bağlantısını pasife almak aktif otomatik sorguları
+  durdurur; yeniden aktifleştirmek yalnız bu nedenle duran sorguları tekrar
+  planlar.
+- **Değişti:** Bağlantı silindiğinde şifreli credential ve sorgu zamanlaması
+  kaldırılır; daha önce alınmış banka hareketleri ile denetim kayıtları finansal
+  geçmiş olarak korunur.
+- **Güvenlik:** Banka bağlantısı oluşturma, güncelleme ve silme işlemleri tenant
+  `admin` veya `operator` rolü gerektirir. Demo ve production credential modları
+  birbiri yerine kullanılamaz.
 - **Dokümantasyon:** Banka Verisi ile Ödeme Orkestrasyonu bağımsız ürün alanları
   olarak ayrıldı. Sanal POS kurulumu, BIN/taksit, oran, 3DS, routing, durum,
   iptal/iade, webhook, sandbox ve hata yönetimi için ayrı rehberler eklendi.

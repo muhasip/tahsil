@@ -114,9 +114,10 @@ paths:
       operationId: postBanksAccounts
       tags:
         - Banking - Accounts
-      summary: Register one bank connection for the tenant
-      description: A tenant can register a bank code once. Currency and physical accounts are discovered
-        by provider setup and returned as subAccounts.
+      summary: Register a bank connection for the tenant
+      description: A tenant can register multiple independent connections for the same bank. Currency and
+        physical accounts are discovered by provider setup and returned as subAccounts. Demo and
+        production connections keep separate credential modes.
       requestBody:
         required: true
         content:
@@ -197,6 +198,8 @@ paths:
       tags:
         - Banking - Accounts
       summary: Remove bank account connector
+      description: Removes the connection, encrypted credential and query schedule. Previously ingested
+        transactions and retained provider audit logs remain available as financial history.
       responses:
         "200":
           $ref: "#/components/responses/StatusResponse"
@@ -2215,11 +2218,20 @@ components:
       example:
         bankCode: akbank
         title: Ana tahsilat hesabı
+        environment: production
       properties:
         bankCode:
           type: string
         title:
           type: string
+        environment:
+          type: string
+          enum:
+            - demo
+            - production
+          default: production
+          description: Immutable connection mode. Demo connections accept only server-constrained demo
+            credentials.
     BankAccountUpdate:
       type: object
       properties:
@@ -2227,6 +2239,8 @@ components:
           type: string
         status:
           type: boolean
+          description: Deactivating a connection pauses its active query schedules. Reactivation resumes only
+            schedules paused for that connection.
     TransactionCreate:
       type: object
       required:
