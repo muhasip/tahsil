@@ -30,7 +30,7 @@ for (const pathItem of Object.values(document.paths)) {
     if (methods.has(method)) operationCount += 1;
   }
 }
-if (operationCount !== 57) {
+if (operationCount !== 81) {
   throw new Error(`Eksik kullanıcı sözleşmesi: yalnız ${operationCount} operasyon bulundu`);
 }
 if (document.paths?.['/core/companies'] || document.paths?.['/auth/bootstrap']) {

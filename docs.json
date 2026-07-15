@@ -92,6 +92,7 @@
               {
                 "group": "Operasyon",
                 "pages": [
+                  "rehberler/sanal-pos-ve-odemeler",
                   "rehberler/connector-loglari",
                   "rehberler/sayfalama-ve-csv"
                 ]

@@ -25,6 +25,8 @@ tags:
     description: Flexible tenant dashboard analytics and widget query endpoints.
   - name: Audit - Connector Logs
     description: Customer-visible bank connector request/response audit trail.
+  - name: Payments - Orchestration
+    description: Tenant Virtual POS, rate plan and payment intent orchestration.
 paths:
   /health:
     get:
@@ -1473,6 +1475,500 @@ paths:
       x-mint:
         metadata:
           playground: simple
+  /payments/usage:
+    get:
+      operationId: getPaymentUsage
+      tags:
+        - Payments - Orchestration
+      summary: Get Virtual POS and successful payment plan usage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+        "503":
+          $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+  /payments/providers:
+    get:
+      operationId: listPaymentProviders
+      tags:
+        - Payments - Orchestration
+      summary: List enabled payment providers
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+  /payments/card-brands:
+    get:
+      operationId: listPaymentCardBrands
+      tags:
+        - Payments - Orchestration
+      summary: List supported card families
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+  /payments/settings:
+    get:
+      operationId: getPaymentSettings
+      tags:
+        - Payments - Orchestration
+      summary: Get tenant payment settings
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+    put:
+      operationId: updatePaymentSettings
+      tags:
+        - Payments - Orchestration
+      summary: Update allowed origins, webhook and routing settings
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/settings/webhook-secret:
+    post:
+      operationId: rotatePaymentWebhookSecret
+      tags:
+        - Payments - Orchestration
+      summary: Rotate and return the tenant webhook secret once
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses:
+    get:
+      operationId: listVirtualPoses
+      tags:
+        - Payments - Orchestration
+      summary: List tenant Virtual POS connections
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+    post:
+      operationId: createVirtualPos
+      tags:
+        - Payments - Orchestration
+      summary: Create a Virtual POS connection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses/{id}:
+    parameters:
+      - $ref: "#/components/parameters/XCompanyIdRequired"
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getVirtualPos
+      tags:
+        - Payments - Orchestration
+      summary: Get a Virtual POS connection
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+    put:
+      operationId: updateVirtualPos
+      tags:
+        - Payments - Orchestration
+      summary: Update a Virtual POS connection
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
+    delete:
+      operationId: deleteVirtualPos
+      tags:
+        - Payments - Orchestration
+      summary: Delete a Virtual POS connection
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses/{id}/credentials:
+    parameters:
+      - $ref: "#/components/parameters/XCompanyIdRequired"
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getVirtualPosCredentialStatus
+      tags:
+        - Payments - Orchestration
+      summary: Get credential metadata without secret values
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+    put:
+      operationId: writeVirtualPosCredentials
+      tags:
+        - Payments - Orchestration
+      summary: Encrypt and replace Virtual POS credentials
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              writeOnly: true
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+    delete:
+      operationId: deleteVirtualPosCredentials
+      tags:
+        - Payments - Orchestration
+      summary: Delete Virtual POS credentials
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses/{id}/verify:
+    post:
+      operationId: verifyVirtualPos
+      tags:
+        - Payments - Orchestration
+      summary: Test and activate a configured Virtual POS
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses/{posId}/rate-plans:
+    parameters:
+      - $ref: "#/components/parameters/XCompanyIdRequired"
+      - name: posId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: listVirtualPosRatePlans
+      tags:
+        - Payments - Orchestration
+      summary: List rate plan versions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+    post:
+      operationId: createVirtualPosRatePlan
+      tags:
+        - Payments - Orchestration
+      summary: Create a draft rate plan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rows
+              properties:
+                rows:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses/{posId}/rate-plans/{planId}:
+    put:
+      operationId: updateVirtualPosRatePlan
+      tags:
+        - Payments - Orchestration
+      summary: Update draft rate rows
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: posId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rows
+              properties:
+                rows:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/virtual-poses/{posId}/rate-plans/{planId}/publish:
+    post:
+      operationId: publishVirtualPosRatePlan
+      tags:
+        - Payments - Orchestration
+      summary: Publish and atomically activate a rate plan
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: posId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/intents:
+    get:
+      operationId: listPaymentIntents
+      tags:
+        - Payments - Orchestration
+      summary: List payment intents
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+    post:
+      operationId: createPaymentIntent
+      tags:
+        - Payments - Orchestration
+      summary: Create a single-use payment session
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentIntentCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/intents/{id}:
+    get:
+      operationId: getPaymentIntent
+      tags:
+        - Payments - Orchestration
+      summary: Get canonical payment status
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: interactive
+  /payments/intents/{id}/cancel:
+    post:
+      operationId: cancelPaymentIntent
+      tags:
+        - Payments - Orchestration
+      summary: Cancel an unsettled payment
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
+  /payments/intents/{id}/refunds:
+    post:
+      operationId: refundPaymentIntent
+      tags:
+        - Payments - Orchestration
+      summary: Create a full or partial refund
+      parameters:
+        - $ref: "#/components/parameters/XCompanyIdRequired"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            maxLength: 128
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amountMinor
+              properties:
+                amountMinor:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/ItemResponse"
+      x-mint:
+        metadata:
+          playground: simple
 components:
   securitySchemes:
     bearerAuth:
@@ -1604,6 +2100,31 @@ components:
               page: 1
               totalPage: 0
   schemas:
+    PaymentIntentCreate:
+      type: object
+      required:
+        - externalId
+        - amountMinor
+        - currency
+        - returnUrl
+      properties:
+        externalId:
+          type: string
+          maxLength: 128
+        amountMinor:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        returnUrl:
+          type: string
+          format: uri
+        metadata:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
     AccessPolicy:
       type: object
       properties:

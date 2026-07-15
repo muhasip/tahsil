@@ -66,8 +66,8 @@ for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
   }
 }
 
-if (operationCount !== 57) {
-  throw new Error(`Müşteri API operasyon sayısı 57 olmalı, bulunan: ${operationCount}`);
+if (operationCount !== 81) {
+  throw new Error(`Müşteri API operasyon sayısı 81 olmalı, bulunan: ${operationCount}`);
 }
 if (document.servers?.[0]?.url !== 'https://api.tahsil.dev') {
   throw new Error('OpenAPI production server adresi hatalı');

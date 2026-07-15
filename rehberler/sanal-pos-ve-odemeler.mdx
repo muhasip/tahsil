@@ -1,0 +1,76 @@
+---
+title: Sanal POS ve ödemeler
+description: Birden fazla POS bağlantısını, kart oranlarını ve 3DS ödeme durumlarını yönetin.
+---
+
+Tahsil, banka ve ödeme kuruluşlarıyla yaptığınız doğrudan sanal POS
+sözleşmelerini ortak bir API akışında yönetir. Tahsil fon tutmaz veya sanal POS
+sağlamaz; bağlantı credential'ları size ait sözleşmeyi temsil eder.
+
+## Kurulum sırası
+
+1. `GET /payments/providers` ile kullanılabilir sağlayıcıları inceleyin.
+2. `POST /payments/virtual-poses` ile bir veya daha fazla POS bağlantısı ekleyin.
+3. Credential değerlerini `PUT /payments/virtual-poses/{id}/credentials` ile
+   yazın. Sonraki cevaplarda yalnız yapılandırma durumu gösterilir.
+4. Tek çekim ve taksit satırlarını draft oran planına ekleyip yayınlayın.
+5. Merchant dönüş origin'lerini ve webhook adresini `PUT /payments/settings`
+   ile tanımlayın.
+6. POS'u doğrulayıp aktive edin.
+
+<Note>
+  POS, credential ve oran yönetimi Bearer oturumlu tenant `admin` veya `operator`
+  rolü gerektirir.
+</Note>
+
+## Oran eşleşmesi
+
+Her satır para birimi, kart ailesi, kart kuruluşu ve taksit sayısıyla tanımlanır.
+`1` tek çekimdir. İşletme maliyeti ile müşteriye uygulanacak oran basis point
+olarak ayrı tutulur; `100` basis point yüzde birdir.
+
+Kart eşleşmesi en özel satırdan genel satıra ilerler:
+
+1. Kart ailesi + kart kuruluşu
+2. Kart ailesi + `ANY`
+3. `GENERAL` + kart kuruluşu
+4. `GENERAL` + `ANY`
+
+Yayınlanan oran planı değiştirilmez. Yeni oran için yeni bir draft sürüm
+oluşturup yayınlayın; geçmiş ödemeler kullandıkları oran ve routing snapshot'ını
+korur.
+
+## Ödeme akışı
+
+Merchant backend'iniz `POST /payments/intents` çağrısını benzersiz bir
+`Idempotency-Key` ile yapar. Cevaptaki kısa ömürlü `clientSecret` ve connector
+adresini yalnız ilgili ödeme oturumuna verin.
+
+Tarayıcı kartın ilk sekiz hanesiyle taksit seçeneklerini connector'dan alır.
+Kartın tamamı ve CVC yalnız connector'a gönderilir; Tahsil Core API'sine,
+webhook'a veya ödeme durumu cevabına girmez. 3DS işlemi tamamlandığında kullanıcı
+önceden izin verdiğiniz dönüş adresine yönlendirilir.
+
+Kesin ödeme sonucunu `GET /payments/intents/{id}` üzerinden okuyun. Tarayıcı
+dönüş parametresini tek başına ödeme kanıtı kabul etmeyin.
+
+## Routing ve failover
+
+Tahsil uygun POS'ları tahmini işletme maliyetine göre sıralar. Eşit maliyette
+yönetim önceliği ve kararlı kayıt sırası kullanılır. En fazla üç POS denenir.
+Yalnız sağlayıcının işlemi kabul etmediği kesinleşen teknik hata sonraki POS'a
+geçebilir. Banka reddi, 3DS hatası veya sonucu belirsiz timeout yeni POS'ta
+yeniden denenmez.
+
+## Webhook
+
+Webhook secret'ını oluşturduğunuzda güvenli kasanıza kaydedin; secret sonraki
+okuma cevaplarında gösterilmez. Bildirimdeki event ID, timestamp ve HMAC imzasını
+ham request body üzerinden doğrulayın. Aynı event ID tekrar gelirse idempotent
+cevap verin. Canonical durum endpoint'i her zaman son doğrulama kaynağıdır.
+
+## İlk sürüm sınırları
+
+İlk sürüm 3DS satış, durum sorgusu, settlement öncesi iptal ve başarılı işlemde
+tam/kısmi iadeyi kapsar. Non-3DS, pre-auth/post-auth, kart saklama, tekrarlı
+ödeme, ödeme linki ve Tahsil checkout arayüzü bu sürümde yoktur.

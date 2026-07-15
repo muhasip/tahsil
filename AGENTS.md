@@ -26,7 +26,7 @@ This public repository contains only the Mintlify documentation for Tahsil custo
 
 ## Verification
 
-Run `npm run ci` before committing. The content guard must report exactly 57 customer operations and reject private platform or special integration shapes.
+Run `npm run ci` before committing. The content guard must report exactly 81 customer operations and reject private platform or special integration shapes.
 
 ## Server contract synchronization
 
