@@ -1,0 +1,55 @@
+---
+title: Routing ve failover
+description: Uygun POS adaylarının maliyet, öncelik ve hata sınıfına göre nasıl seçildiğini anlayın.
+---
+
+Routing yalnız “en düşük oranı seçmek” değildir. Önce kart ve işlem için uygun
+POS'lar bulunur; ardından maliyet ve kararlı önceliklerle sıralanır.
+
+## Aday oluşturma
+
+Bir POS ancak aşağıdaki koşullarda aday olabilir:
+
+- Durumu `active` olmalıdır.
+- İşlem para birimini desteklemelidir.
+- Yayınlanmış aktif oran planı bulunmalıdır.
+- Kart ailesi, kart kuruluşu ve taksit için eşleşen aktif satır olmalıdır.
+- Sağlayıcı adaptörü ilgili ortamda kullanılabilir olmalıdır.
+
+Her aday için müşteriden tahsil edilecek tutar, merchant maliyeti ve merchant
+neti hesaplanır. Intent içine seçilen oran planı ve routing kararı snapshot
+olarak yazılır.
+
+## Sıralama
+
+Adaylar şu sırayla karşılaştırılır:
+
+1. En düşük tahmini `merchantCostMinor`
+2. En düşük `routingPriority`
+3. Kararlı POS kimliği sırası
+
+Firma ayarındaki `maxAttempts` 1 ile 3 arasındadır. Yalnız en iyi üç aday
+değerlendirilir.
+
+## Failover kararı
+
+| Sonuç | Başka POS denenir mi? | Neden |
+| --- | --- | --- |
+| Kesin teknik hata, sağlayıcı işlemi kabul etmedi | Evet | Çift çekim riski yoktur |
+| Banka reddi | Hayır | Ret iş sonucudur, altyapı hatası değildir |
+| 3DS doğrulama hatası | Hayır | Kullanıcı doğrulama süreci tamamlanmamıştır |
+| Validation hatası | Hayır | Aynı bozuk istek başka POS'a gönderilmemelidir |
+| Timeout, kabul sonucu belirsiz | Hayır | İlk POS çekim yapmış olabilir |
+| Başarılı | Hayır | Intent tamamlanmıştır |
+
+<Warning>
+  “Cevap alamadım” durumunu teknik başarısızlık sayıp başka POS'a geçmeyin.
+  Banka ilk işlemi kabul etmişse çift tahsilat oluşabilir. Belirsiz işlemi önce
+  status sorgusu ve operasyonel mutabakatla çözün.
+</Warning>
+
+## Routing önceliğinin rolü
+
+`routingPriority` maliyetin yerine geçmez; eşit maliyetli POS'lar arasında
+kontrollü tercih sağlar. Bir POS'u tamamen devreden çıkarmak için önceliğini
+yükseltmek yerine `disabled` durumuna alın.

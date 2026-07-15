@@ -1,0 +1,54 @@
+---
+title: İptal ve iade
+description: Settlement öncesi iptal ile başarılı işlemde tam veya kısmi iade arasındaki farkı yönetin.
+---
+
+İptal ve iade aynı finansal işlem değildir. Hangi operasyonun uygulanabileceği
+sağlayıcının işlem durumu ve settlement zamanına bağlıdır.
+
+## İptal
+
+`POST /payments/intents/{id}/cancel`, settlement öncesi iptal akışıdır. Intent
+`pending`, `processing`, `requires_3ds` veya sağlayıcının izin verdiği başarılı
+durumdayken kullanılabilir.
+
+İptal sonrası canonical intent durumu `canceled` olur ve
+`payment.canceled` webhook'u üretilir. Tamamlanmamış ödeme için ayrılan kullanım
+rezervasyonu geri bırakılır.
+
+<Note>
+  Başarılı işlemin gerçekten iptal edilebilir olması sağlayıcının gün sonu ve
+  settlement kurallarına bağlıdır. İptal reddedilirse iade akışını değerlendirin.
+</Note>
+
+## Tam ve kısmi iade
+
+`POST /payments/intents/{id}/refunds` çağrısında iade tutarını minor unit olarak
+gönderin ve benzersiz `Idempotency-Key` kullanın.
+
+```json
+{
+  "amountMinor": 25000
+}
+```
+
+İade yalnız `succeeded` veya `partially_refunded` intent için oluşturulabilir.
+Toplam iade, `paidAmountMinor` değerini aşamaz.
+
+- Bir bölümü iade edildiğinde durum `partially_refunded` olur.
+- Toplam iade tahsil edilen tutara ulaştığında durum `refunded` olur.
+- Her iade isteği kendi idempotency anahtarına sahip olmalıdır.
+
+## Merchant kayıtları
+
+Sipariş sisteminizde aşağıdaki değerleri ayrı tutun:
+
+- Sipariş ana tutarı
+- Karttan tahsil edilen `paidAmountMinor`
+- Toplam `refundedAmountMinor`
+- Kalan net tahsilat
+- Tahsil intent ID'si ve merchant iade referansı
+
+Webhook geldiğinde iade işlemini event ID ve intent durumu üzerinden idempotent
+uygulayın. Browser veya operasyon panelindeki tek bir başarı mesajı finansal
+kayıt için yeterli değildir.

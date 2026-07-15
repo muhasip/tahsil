@@ -1,0 +1,63 @@
+---
+title: Webhook ve imza doğrulama
+description: Ödeme olaylarını güvenli, idempotent ve yeniden denemeye dayanıklı biçimde tüketin.
+---
+
+Webhook, browser dönüşünden bağımsız merchant bildirimi sağlar. Yine de
+canonical ödeme kaynağı `GET /payments/intents/{id}` endpoint'idir.
+
+## Ayar ve secret
+
+Webhook URL'sini `PUT /payments/settings` ile tanımlayın. Secret'ı
+`POST /payments/settings/webhook-secret` ile oluşturun veya döndürün. Secret
+yalnız oluşturma cevabında gösterilir; kendi güvenli kasanıza kaydedin.
+
+Production URL'si HTTPS kullanmalı, public bir host'a çözülmeli ve URL içine
+credential gömülmemelidir.
+
+## İstek header'ları
+
+Tahsil her istekte aşağıdaki header'ları gönderir:
+
+- `x-tahsil-event-id`
+- `x-tahsil-event-type`
+- `x-tahsil-timestamp`
+- `x-tahsil-signature`
+
+İmza girdisi, noktalarla birleştirilmiş timestamp, event ID ve **ham request
+body** değeridir:
+
+```text
+HMAC_SHA256(secret, timestamp + "." + eventId + "." + rawBody)
+```
+
+JSON'u parse edip yeniden serialize ettikten sonra imza hesaplamayın; whitespace
+ve alan sırası değişebilir. İki imzayı sabit zamanlı karşılaştırmayla kontrol
+edin ve çok eski timestamp'leri reddedin.
+
+## Olaylar
+
+İlk sürümde aşağıdaki ödeme olayları üretilebilir:
+
+- `payment.succeeded`
+- `payment.failed`
+- `payment.unknown`
+- `payment.canceled`
+- `payment.partially_refunded`
+- `payment.refunded`
+
+Tanımadığınız yeni event type için `2xx` döndürüp olayı güvenli biçimde kayda
+alın; webhook tüketicisini kapalı enum yüzünden tamamen durdurmayın.
+
+## Idempotent tüketim
+
+1. Ham body üzerinden imzayı doğrulayın.
+2. Event ID daha önce işlendi mi kontrol edin.
+3. İlgili intent'in canonical durumunu okuyun.
+4. Sipariş güncellemesini kendi transaction'ınız içinde uygulayın.
+5. Event ID'yi işlendi olarak kaydedin.
+6. Yalnız başarılı işlemden sonra `2xx` döndürün.
+
+Tahsil başarısız teslimleri artan bekleme süresiyle yeniden dener. On denemeden
+sonra olay operasyonel inceleme için `dead` durumuna geçer. Endpoint'iniz hızlı
+cevap vermeli; uzun işleri kendi kuyruğunuza aktarmalısınız.

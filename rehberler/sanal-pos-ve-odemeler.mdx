@@ -1,76 +1,77 @@
 ---
-title: Sanal POS ve ödemeler
-description: Birden fazla POS bağlantısını, kart oranlarını ve 3DS ödeme durumlarını yönetin.
+title: Ödeme orkestrasyonuna genel bakış
+description: Sanal POS ödemelerinin banka hareketlerinden farkını, tarafları ve uçtan uca yaşam döngüsünü anlayın.
 ---
 
-Tahsil, banka ve ödeme kuruluşlarıyla yaptığınız doğrudan sanal POS
-sözleşmelerini ortak bir API akışında yönetir. Tahsil fon tutmaz veya sanal POS
-sağlamaz; bağlantı credential'ları size ait sözleşmeyi temsil eder.
+Tahsil Ödeme Orkestrasyonu, banka ve ödeme kuruluşlarıyla yaptığınız doğrudan
+sanal POS sözleşmelerini ortak bir ödeme yaşam döngüsünde yönetir. Tahsil fon
+tutmaz, para aktarmaz ve size sanal POS sağlamaz. Hangi kuruluşla çalışacağınıza
+ve ticari sözleşmenize siz karar verirsiniz.
 
-## Kurulum sırası
+## Banka verisi ile ödeme aynı şey değildir
 
-1. `GET /payments/providers` ile kullanılabilir sağlayıcıları inceleyin.
-2. `POST /payments/virtual-poses` ile bir veya daha fazla POS bağlantısı ekleyin.
-3. Credential değerlerini `PUT /payments/virtual-poses/{id}/credentials` ile
-   yazın. Sonraki cevaplarda yalnız yapılandırma durumu gösterilir.
-4. Tek çekim ve taksit satırlarını draft oran planına ekleyip yayınlayın.
-5. Merchant dönüş origin'lerini ve webhook adresini `PUT /payments/settings`
-   ile tanımlayın.
-6. POS'u doğrulayıp aktive edin.
+| Alan | Banka Verisi | Ödeme Orkestrasyonu |
+| --- | --- | --- |
+| Başlangıç | Bankada oluşmuş hesap hareketi | Merchant'ın başlattığı tahsilat isteği |
+| Yön | Bankadan Tahsil'e veri okuma | Tahsil'den seçilen POS'a işlem gönderme |
+| Ana kayıt | Hesap ve hareket | Payment intent ve değişmez attempt kayıtları |
+| Kritik belirsizlik | Hareketin tekrar alınması | Bankanın işlemi kabul edip etmediğinin bilinmemesi |
+| Güvenli tekrar | `providerStamp` ile çoğaltmama | `Idempotency-Key` ve canonical durum sorgusu |
+| Sonraki işlem | Eşleştirme ve raporlama | İptal, iade, webhook ve durum mutabakatı |
 
-<Note>
-  POS, credential ve oran yönetimi Bearer oturumlu tenant `admin` veya `operator`
-  rolü gerektirir.
-</Note>
+İki alan aynı firma, yetkilendirme ve limit altyapısını kullanabilir; ancak veri
+modeli ve hata davranışı ayrıdır. Başarılı bir ödemenin banka hareketiyle
+eşleştirilmesi ayrı bir mutabakat problemidir.
 
-## Oran eşleşmesi
+## Ödeme akışındaki taraflar
 
-Her satır para birimi, kart ailesi, kart kuruluşu ve taksit sayısıyla tanımlanır.
-`1` tek çekimdir. İşletme maliyeti ile müşteriye uygulanacak oran basis point
-olarak ayrı tutulur; `100` basis point yüzde birdir.
+- **Merchant backend:** Sipariş referansını ve tutarı belirler, payment intent
+  oluşturur ve kesin durumu Core API'den okur.
+- **Merchant frontend:** Tahsil'in verdiği kısa ömürlü oturumla taksitleri
+  gösterir ve kart bilgisini kart işleme katmanına iletir.
+- **Tahsil Core API:** Firma kapsamı, POS kayıtları, oran planları, routing
+  kararı, payment intent, attempt, iade ve webhook durumunun sahibidir.
+- **Tahsil kart işleme katmanı:** Kartın tamamını geçici olarak işler, seçilen
+  POS adaptörünü çağırır ve 3DS dönüşünü normalize eder.
+- **Banka veya ödeme kuruluşu:** Ödemeyi kabul eder, reddeder ya da teknik
+  sonucu üretir; fon ilişkisi merchant ile sağlayıcı arasındadır.
 
-Kart eşleşmesi en özel satırdan genel satıra ilerler:
+```mermaid
+sequenceDiagram
+  participant B as Merchant backend
+  participant C as Tahsil Core API
+  participant F as Merchant frontend
+  participant K as Kart işleme katmanı
+  participant P as Banka veya ödeme kuruluşu
+  B->>C: Payment intent oluştur
+  C-->>B: clientSecret ve ödeme oturumu
+  F->>K: BIN ile taksit seçeneklerini iste
+  K->>C: Kart ailesi ve uygun POS adayları
+  C-->>K: Oranlar ve routing adayları
+  F->>K: Kart bilgisi ve seçilen taksit
+  K->>P: 3DS ödemeyi başlat
+  P-->>K: 3DS sonucu
+  K->>C: Normalize attempt sonucu
+  C-->>B: Canonical ödeme durumu ve webhook
+```
 
-1. Kart ailesi + kart kuruluşu
-2. Kart ailesi + `ANY`
-3. `GENERAL` + kart kuruluşu
-4. `GENERAL` + `ANY`
+## İlk sürümün sınırı
 
-Yayınlanan oran planı değiştirilmez. Yeni oran için yeni bir draft sürüm
-oluşturup yayınlayın; geçmiş ödemeler kullandıkları oran ve routing snapshot'ını
-korur.
+İlk sürüm 3DS satış, canonical durum sorgusu, settlement öncesi iptal ve başarılı
+işlemde tam veya kısmi iadeyi kapsar. Non-3DS, pre-auth/post-auth, kart saklama,
+tekrarlı ödeme, ödeme linki ve Tahsil checkout arayüzü kapsam dışındadır.
 
-## Ödeme akışı
-
-Merchant backend'iniz `POST /payments/intents` çağrısını benzersiz bir
-`Idempotency-Key` ile yapar. Cevaptaki kısa ömürlü `clientSecret` ve connector
-adresini yalnız ilgili ödeme oturumuna verin.
-
-Tarayıcı kartın ilk sekiz hanesiyle taksit seçeneklerini connector'dan alır.
-Kartın tamamı ve CVC yalnız connector'a gönderilir; Tahsil Core API'sine,
-webhook'a veya ödeme durumu cevabına girmez. 3DS işlemi tamamlandığında kullanıcı
-önceden izin verdiğiniz dönüş adresine yönlendirilir.
-
-Kesin ödeme sonucunu `GET /payments/intents/{id}` üzerinden okuyun. Tarayıcı
-dönüş parametresini tek başına ödeme kanıtı kabul etmeyin.
-
-## Routing ve failover
-
-Tahsil uygun POS'ları tahmini işletme maliyetine göre sıralar. Eşit maliyette
-yönetim önceliği ve kararlı kayıt sırası kullanılır. En fazla üç POS denenir.
-Yalnız sağlayıcının işlemi kabul etmediği kesinleşen teknik hata sonraki POS'a
-geçebilir. Banka reddi, 3DS hatası veya sonucu belirsiz timeout yeni POS'ta
-yeniden denenmez.
-
-## Webhook
-
-Webhook secret'ını oluşturduğunuzda güvenli kasanıza kaydedin; secret sonraki
-okuma cevaplarında gösterilmez. Bildirimdeki event ID, timestamp ve HMAC imzasını
-ham request body üzerinden doğrulayın. Aynı event ID tekrar gelirse idempotent
-cevap verin. Canonical durum endpoint'i her zaman son doğrulama kaynağıdır.
-
-## İlk sürüm sınırları
-
-İlk sürüm 3DS satış, durum sorgusu, settlement öncesi iptal ve başarılı işlemde
-tam/kısmi iadeyi kapsar. Non-3DS, pre-auth/post-auth, kart saklama, tekrarlı
-ödeme, ödeme linki ve Tahsil checkout arayüzü bu sürümde yoktur.
+<CardGroup cols={2}>
+  <Card title="Mimari ve güven sınırı" icon="shield-halved" href="/rehberler/odemeler/mimari-ve-guvenlik">
+    Kart verisinin hangi bileşene girdiğini ve hangi verilerin saklandığını inceleyin.
+  </Card>
+  <Card title="İlk POS'u kurun" icon="money-check-dollar" href="/rehberler/odemeler/sanal-pos-kurulumu">
+    Sağlayıcıdan aktivasyona kadar zorunlu sırayı uygulayın.
+  </Card>
+  <Card title="Ödeme oturumu" icon="code" href="/rehberler/odemeler/odeme-oturumu">
+    Backend ve frontend sorumluluklarını adım adım bağlayın.
+  </Card>
+  <Card title="Durum yaşam döngüsü" icon="diagram-project" href="/rehberler/odemeler/durumlar-ve-idempotency">
+    Hangi durumun kesin, hangisinin geçici veya belirsiz olduğunu öğrenin.
+  </Card>
+</CardGroup>

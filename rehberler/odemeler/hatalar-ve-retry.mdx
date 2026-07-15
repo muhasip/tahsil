@@ -1,0 +1,51 @@
+---
+title: Hatalar ve güvenli retry
+description: Validation, ret, teknik hata ve belirsiz sonuç gruplarına doğru merchant davranışını bağlayın.
+---
+
+Ödeme hatalarında yalnız HTTP status koduna bakmak yeterli değildir. Hatanın
+bankanın işlemi kabul edip etmediği hakkında ne söylediği retry kararını
+belirler.
+
+## Hata grupları
+
+| Grup | Örnek | Otomatik retry |
+| --- | --- | --- |
+| Validation | Eksik alan, desteklenmeyen para birimi, geçersiz taksit | Hayır; isteği düzeltin |
+| Authentication/authorization | Geçersiz oturum, yetersiz scope | Hayır; erişimi düzeltin |
+| Decline | Banka reddi, yetersiz bakiye, kart kısıtı | Başka POS'ta otomatik denemeyin |
+| Technical, kesin kabul edilmedi | Sağlayıcıya ulaşılamadı, işlem gönderilmedi | Routing adayı varsa kontrollü failover |
+| Unknown | Timeout veya kabul sonucu belirsiz | Hayır; status çözümlemesi yapın |
+| Conflict | Session kullanılmış, oran planı yayınlanmış | Aynı komutu körlemesine tekrarlamayın |
+
+## API retry kuralları
+
+- Intent oluşturma network retry'ında aynı `Idempotency-Key` kullanın.
+- İade retry'ında ilk iade operasyonunun idempotency anahtarını koruyun.
+- Salt okunur status isteğini exponential backoff ve üst sınırla
+  tekrarlayabilirsiniz.
+- `429` veya geçici `5xx` cevabında `Retry-After` varsa uygulayın.
+- Validation ve yetki hatalarını backoff ile tekrar etmek yerine düzeltin.
+
+## Kullanıcı mesajı ile teknik logu ayırın
+
+Kullanıcıya eyleme dönük, güvenli bir mesaj gösterin. Teknik kayıtta correlation
+ID, intent ID, sağlayıcı kodu ve güvenli hata kodunu tutun. Aşağıdaki alanları
+hiçbir hata payload'ına yazmayın:
+
+- Tam kart numarası
+- CVC
+- POS credential değerleri
+- `clientSecret`
+- Webhook secret
+
+## Aynı siparişi yeniden deneme
+
+Kesin başarısız intent sonrasında kullanıcı yeni bir ödeme oturumu başlatabilir.
+Yeni intent için yeni idempotency anahtarı kullanın fakat aynı `externalId`
+üzerinden sipariş ilişkisini koruyabilirsiniz. Önceki intent `unknown` ise yeni
+denemeyi otomatik açmayın.
+
+<Card title="Belirsiz işlem kararları" icon="triangle-exclamation" href="/rehberler/odemeler/belirsiz-islemler">
+  Timeout sonrasında çift tahsilat oluşturmadan izlenecek akışı inceleyin.
+</Card>

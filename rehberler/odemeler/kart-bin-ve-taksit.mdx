@@ -1,0 +1,56 @@
+---
+title: Kart ailesi, BIN ve taksit
+description: Kart kuruluşu, kart ailesi ve ilk sekiz hane üzerinden uygun taksit seçeneklerinin nasıl bulunduğunu anlayın.
+---
+
+Kart kuruluşu ile kart ailesi aynı kavram değildir. Doğru taksit ve POS
+eşleşmesi için ikisi ayrı tutulur.
+
+| Kavram | Örnek | Kullanım |
+| --- | --- | --- |
+| Kart kuruluşu | `VISA`, `MASTERCARD`, `TROY` | Kart ağını ve POS uyumluluğunu belirler |
+| Kart ailesi | `BONUS`, `WORLD`, `AXESS` | Banka kampanyası ve taksit oranını belirler |
+| Kartı veren banka | Banka kodu | BIN metadata'sı ve operasyonel analiz |
+| Kart tipi | Kredi, debit, prepaid | Uygun ödeme seçeneği ve raporlama |
+
+## BIN çözümleme
+
+Ödeme sayfası kartın ilk sekiz hanesi girildiğinde taksit sorgusunu başlatır.
+Aktif BIN kataloğu aşağıdaki güvenli metadata'yı döndürür:
+
+- Kart ailesi
+- Kart kuruluşu
+- Kartı veren banka
+- Kart tipi
+- Ticari kart bilgisi
+
+Tam kart numarası bu işlem için gerekmez. Core API'ye yalnız sekiz haneli BIN
+ve daha sonra güvenli son dört hane metadata'sı yazılır.
+
+## Taksit seçeneklerinin oluşması
+
+Bir taksit seçeneğinin gösterilebilmesi için bütün koşullar sağlanmalıdır:
+
+1. Firma için aktif bir POS bulunmalıdır.
+2. POS ilgili para birimini desteklemelidir.
+3. POS'un yayınlanmış oran planında ilgili taksit sayısı olmalıdır.
+4. Oran satırı kart ailesi ve kart kuruluşu fallback kurallarından biriyle
+   eşleşmelidir.
+5. Satır aktif olmalıdır.
+
+Sonuçta her taksit sayısı için en uygun POS adayının müşteriden tahsil edilecek
+tutarı ve maliyet bilgisi hesaplanır. Müşteriye gösterilen seçenek, ödeme
+başlatılırken tekrar doğrulanır; browser'daki eski hesap tek başına kabul
+edilmez.
+
+<Note>
+  `GET /payments/card-brands`, desteklenen kart ailelerini listeler. Bu katalog
+  ile BIN sonucu birlikte kullanılır; kart ailesini frontend tahminiyle
+  belirlemeyin.
+</Note>
+
+## Genel kart fallback'i
+
+Belirli bir kart ailesi için özel satırınız yoksa `GENERAL` satırı kullanılabilir.
+Benzer şekilde kart kuruluşu `ANY` seçilerek birden fazla ağ için ortak oran
+tanımlanabilir. Fallback sırası oran planları rehberinde açıklanır.

@@ -1,0 +1,53 @@
+---
+title: Belirsiz işlemler ve durum mutabakatı
+description: Timeout veya eksik callback sonrasında çift tahsilat oluşturmadan ödeme sonucunu çözümleyin.
+---
+
+`unknown`, ödeme başarısız demek değildir. Tahsil veya sağlayıcı, bankanın
+işlemi kabul edip etmediğini kesin olarak doğrulayamamıştır. Bu durum ödeme
+sistemlerindeki en kritik operasyonel ayrımdır.
+
+## Belirsizlik nasıl oluşur?
+
+- Banka isteği aldıktan sonra bağlantı kesilir.
+- Sağlayıcı timeout döndürür fakat bankadaki işlem sürer.
+- 3DS callback'i ulaşmaz veya yarıda kesilir.
+- Sağlayıcı durum sorgusu geçici olarak cevap vermez.
+- Kullanıcı browser'ı kapatır ve merchant return URL'sine dönmez.
+
+## Güvenli davranış
+
+1. Intent'i `unknown` durumda tutun.
+2. Aynı sipariş için otomatik olarak başka POS'ta ödeme başlatmayın.
+3. Canonical intent durumunu periyodik ve sınırlı biçimde sorgulayın.
+4. Sağlayıcı referansı oluştuysa status sorgusuyla sonucu çözün.
+5. Sonuç kesinleşmeden siparişi başarısız veya başarılı finansal kayda çevirmeyin.
+6. Operasyon süresi aşılırsa manuel inceleme kuyruğuna alın.
+
+<Warning>
+  Belirsiz işlemde yeni POS denemesi çift tahsilat oluşturabilir. Kullanıcıya
+  “yeniden deneyin” göstermeden önce ilk intent'in sonucunu çözün veya ayrı bir
+  risk/onay süreci uygulayın.
+</Warning>
+
+## Merchant durum modeli
+
+Merchant sipariş modelinde yalnız `paid/unpaid` ikilisi kullanmayın. En azından
+şu ayrımı koruyun:
+
+- Ödeme bekleniyor
+- Ödeme işleniyor
+- Ödeme doğrulanıyor
+- Ödeme başarılı
+- Ödeme başarısız
+- İptal/iade edildi
+
+“Ödeme doğrulanıyor” durumu müşteri hizmetlerinin ve otomatik sistemlerin aynı
+sipariş için ikinci tahsilat başlatmasını engeller.
+
+## Banka hareketiyle mutabakat
+
+Payment intent'in başarılı olması ile paranın banka hesabı hareketlerinde
+görünmesi farklı zamanlarda gerçekleşebilir. Banka hareketi eşleştirmesi ödeme
+sonucunun yerine geçmez; settlement ve nakit mutabakatı için ayrı bir kontrol
+katmanıdır.

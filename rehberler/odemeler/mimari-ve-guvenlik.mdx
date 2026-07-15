@@ -1,0 +1,57 @@
+---
+title: Mimari ve güven sınırı
+description: Merchant backend, tarayıcı, Tahsil Core API ve kart işleme katmanı arasındaki veri sınırlarını anlayın.
+---
+
+Ödeme entegrasyonunda en önemli ayrım, ödeme kaydının sahibi ile ham kart
+verisini işleyen bileşenin aynı olmamasıdır. Tahsil Core API payment intent,
+routing ve durum kayıtlarını tutar; kartın tamamını veya CVC'yi kabul etmez.
+
+## Bileşenlerin sorumluluğu
+
+| Bileşen | Gönderir | Saklayabilir | Saklamaz |
+| --- | --- | --- | --- |
+| Merchant backend | Sipariş referansı, tutar, para birimi, dönüş URL'si | Intent kimliği, sipariş eşleştirmesi, canonical durum | PAN ve CVC |
+| Merchant frontend | BIN, taksit seçimi ve kart bilgisi | Kalıcı ödeme sırrı tutmamalı | PAN, CVC ve `clientSecret` |
+| Tahsil Core API | POS ve routing kararı | BIN, son dört hane, kart ailesi, oran ve routing snapshot'ı | Tam PAN ve CVC |
+| Kart işleme katmanı | Seçilen sağlayıcıya ödeme isteği | Kalıcı kart verisi tutmaz | PAN ve CVC'yi veritabanına veya loga yazmaz |
+
+## Güvenli veri akışı
+
+1. Merchant backend, `POST /payments/intents` ile tek kullanımlık oturumu
+   oluşturur.
+2. Backend, `clientSecret` değerini yalnız ilgili ödeme sayfasına verir.
+3. Tarayıcı, kartın ilk sekiz hanesiyle uygun taksit seçeneklerini öğrenir.
+4. Kartın tamamı ve CVC yalnız kart işleme katmanına gönderilir.
+5. Core API yalnız güvenli kart metadata'sını, seçilen oranı ve ödeme durumunu
+   saklar.
+6. Merchant backend kesin sonucu intent endpoint'inden veya imzalı webhook'tan
+   alır.
+
+<Warning>
+  Kart numarasını veya CVC'yi kendi backend'inize, analytics aracınıza, hata
+  izleme sisteminize ya da uygulama loglarınıza göndermeyin. Form state'ini
+  kalıcı browser storage içinde tutmayın.
+</Warning>
+
+## Origin ve dönüş URL'si
+
+İzinli ödeme origin'lerini `PUT /payments/settings` üzerinden tanımlayın. Intent
+içindeki `returnUrl` bu allowlist ile aynı origin'e sahip olmalıdır. Path ve
+query farklı olabilir; protokol, hostname ve port eşleşmesi gerekir.
+
+Production webhook URL'si HTTPS kullanmalı ve public bir hedefe çözülmelidir.
+Localhost, private IP veya URL içine gömülü kullanıcı bilgisi kabul edilmez.
+
+## Yetki ayrımı
+
+POS, credential, oran ve ödeme ayarları yalnız Bearer oturumlu tenant `admin`
+veya `operator` tarafından yönetilir. Ödeme işlemleri için API credential
+scope'ları ayrıdır:
+
+- `payments:read`: intent listeleme ve durum okuma
+- `payments:write`: intent oluşturma ve iptal
+- `payments:refund`: tam veya kısmi iade
+
+Bu ayrım sayesinde ödeme alan uygulama POS credential'larını yönetme yetkisi
+almaz.

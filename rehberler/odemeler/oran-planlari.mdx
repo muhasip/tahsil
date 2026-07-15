@@ -1,0 +1,70 @@
+---
+title: Oran planları ve fiyatlama
+description: Tek çekim, taksit, kart eşleşmesi, müşteri oranı ve işletme maliyetini sürümlü olarak yönetin.
+---
+
+Her sanal POS kendi oran planlarına sahiptir. Planlar `draft`, `published` ve
+`archived` yaşam döngüsüyle sürümlenir. Yayınlanan satırlar değiştirilmez; yeni
+oran geldiğinde yeni draft sürüm oluşturulur.
+
+## Oran satırının anahtarı
+
+Bir satır şu alanların birleşimiyle benzersizdir:
+
+```text
+para birimi + kart ailesi + kart kuruluşu + taksit sayısı
+```
+
+`installment: 1` tek çekimdir. Taksit sayısı 1 ile 36 arasında olabilir. Aynı
+anahtara sahip iki satır aynı planda bulunamaz.
+
+```json
+{
+  "currency": "TRY",
+  "cardBrand": "WORLD",
+  "cardAssociation": "VISA",
+  "installment": 3,
+  "merchantCostBps": 245,
+  "customerRateBps": 300,
+  "pricingMode": "simple_surcharge",
+  "status": true
+}
+```
+
+`100` basis point yüzde birdir. Para tutarları minor unit integer olarak
+hesaplanır; TRY için `10000`, 100,00 TL anlamına gelir.
+
+## Fiyatlama modları
+
+| Mod | Müşteriden tahsil edilen | Kullanım |
+| --- | --- | --- |
+| `merchant_absorbs` | Ana tutar değişmez | Komisyonu işletme üstlenir |
+| `simple_surcharge` | Ana tutara müşteri oranı eklenir | Basit vade farkı |
+| `preserve_net` | Oran kesildikten sonra hedef neti koruyacak brüt tutar | Net tahsilatı koruma |
+
+`merchantCostBps`, POS'un işletmeye maliyetidir. `customerRateBps` ise müşteriye
+uygulanacak fiyatlama oranıdır. Bu iki oranı tek alan gibi kullanmayın.
+
+## Kart eşleşme önceliği
+
+Oran motoru en özel satırdan en genel satıra ilerler:
+
+1. Kart ailesi + kart kuruluşu
+2. Kart ailesi + `ANY`
+3. `GENERAL` + kart kuruluşu
+4. `GENERAL` + `ANY`
+
+Birinci eşleşme bulunduğunda daha genel satıra geçilmez. Satırın para birimi ve
+taksit sayısı da işlemle aynı olmalıdır.
+
+## Yayınlama davranışı
+
+Draft planı `PUT .../{planId}` ile düzenleyin. Hazır olduğunda
+`POST .../{planId}/publish` çağrısı planı yayınlar ve POS'un aktif plan
+işaretçisini atomik değiştirir. Eski ödemeler kullandıkları plan sürümü, oran ve
+routing snapshot'ını korur.
+
+<Warning>
+  Yeni oranları doğrudan production'a taşımadan önce sandbox'ta tek çekim,
+  taksit, genel kart fallback'i ve yuvarlama örneklerini doğrulayın.
+</Warning>

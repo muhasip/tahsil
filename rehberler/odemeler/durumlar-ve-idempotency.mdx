@@ -1,0 +1,50 @@
+---
+title: Ödeme durumları ve idempotency
+description: Payment intent durumlarını, geçişlerini ve tekrar eden isteklerde güvenli davranışı uygulayın.
+---
+
+Payment intent, siparişiniz için canonical ödeme kaydıdır. Her POS denemesi
+ayrı ve değişmez attempt kaydıdır; merchant entegrasyonu attempt yerine intent
+durumunu izlemelidir.
+
+## Intent durumları
+
+| Durum | Anlam | Merchant davranışı |
+| --- | --- | --- |
+| `pending` | Oturum oluşturuldu, henüz kullanılmadı | Ödeme formunu gösterin |
+| `processing` | POS seçimi veya sağlayıcı işlemi sürüyor | Bekleyin, ikinci ödeme başlatmayın |
+| `requires_3ds` | Banka doğrulaması bekleniyor | Kullanıcıyı 3DS akışında tutun |
+| `succeeded` | Ödeme kesin başarılı | Siparişi başarılıya geçirin |
+| `failed` | Ödeme kesin başarısız | Hata grubuna göre yeni kullanıcı aksiyonu isteyin |
+| `unknown` | Sağlayıcının kabul sonucu belirsiz | Yeni POS denemeyin, durumu çözümleyin |
+| `canceled` | İşlem iptal edildi | Siparişi iptal/ödenmedi olarak işleyin |
+| `partially_refunded` | Tahsilatın bir bölümü iade edildi | Kalan net tutarı izleyin |
+| `refunded` | Tahsil edilen tutarın tamamı iade edildi | Siparişi tamamen iade edildi olarak işleyin |
+
+## Terminal ve geçici durumlar
+
+`pending`, `processing` ve `requires_3ds` geçici durumlardır. `succeeded`,
+`failed`, `unknown`, `canceled`, `partially_refunded` ve `refunded` operasyonel
+karar gerektiren kalıcı durumlardır. `unknown` finansal olarak terminal kabul
+edilmez; fakat otomatik failover için durdurucu durumdur.
+
+## Idempotency anahtarı
+
+Intent oluşturma ve iade çağrılarında `Idempotency-Key` zorunludur. Anahtarı
+merchant operasyonuna bağlayın:
+
+```text
+intent:order-2026-000184
+refund:order-2026-000184:01
+```
+
+Aynı iş isteğinin network retry'larında aynı anahtarı kullanın. Farklı tutar
+veya farklı sipariş için anahtarı yeniden kullanmayın. Anahtar firma kapsamı
+içinde benzersizdir.
+
+## Sipariş durumunu güncelleme
+
+Webhook tekrarlı gelebilir ve status sorgusu webhook'tan önce veya sonra
+sonuçlanabilir. Merchant tarafında intent ID ve event ID üzerinden idempotent
+işleyin. Aynı `succeeded` sonucunda siparişi, stoğu veya faturayı ikinci kez
+oluşturmayın.

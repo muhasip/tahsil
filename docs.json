@@ -75,11 +75,32 @@
                 ]
               },
               {
-                "group": "Bankacılık",
+                "group": "Banka Verisi",
                 "pages": [
                   "rehberler/hesaplar-ve-senkronizasyon",
                   "rehberler/hareketler",
                   "rehberler/dashboard"
+                ]
+              },
+              {
+                "group": "Ödeme Orkestrasyonu",
+                "pages": [
+                  "rehberler/sanal-pos-ve-odemeler",
+                  "rehberler/odemeler/mimari-ve-guvenlik",
+                  "rehberler/odemeler/saglayicilar-ve-yetenekler",
+                  "rehberler/odemeler/sanal-pos-kurulumu",
+                  "rehberler/odemeler/kart-bin-ve-taksit",
+                  "rehberler/odemeler/oran-planlari",
+                  "rehberler/odemeler/odeme-oturumu",
+                  "rehberler/odemeler/uc-d-guvenli-odeme",
+                  "rehberler/odemeler/durumlar-ve-idempotency",
+                  "rehberler/odemeler/routing-ve-failover",
+                  "rehberler/odemeler/iptal-ve-iade",
+                  "rehberler/odemeler/webhooklar",
+                  "rehberler/odemeler/belirsiz-islemler",
+                  "rehberler/odemeler/sandbox-ve-test",
+                  "rehberler/odemeler/hatalar-ve-retry",
+                  "rehberler/odemeler/limitler-ve-operasyon"
                 ]
               },
               {
@@ -92,7 +113,6 @@
               {
                 "group": "Operasyon",
                 "pages": [
-                  "rehberler/sanal-pos-ve-odemeler",
                   "rehberler/connector-loglari",
                   "rehberler/sayfalama-ve-csv"
                 ]

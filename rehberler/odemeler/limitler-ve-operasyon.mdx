@@ -1,0 +1,55 @@
+---
+title: Limitler ve operasyonel izleme
+description: Sanal POS ve başarılı ödeme kotalarını, sağlık durumunu ve production kontrollerini izleyin.
+---
+
+Ödeme orkestrasyonu abonelik limitleriyle korunur. Limitler yalnız raporlama
+amaçlı değildir; POS oluşturma ve ödeme tamamlama sırasında atomik olarak
+uygulanır.
+
+## Kullanım metrikleri
+
+`GET /payments/usage`, firma için iki temel metriği gösterir:
+
+- `virtual_pos_count`: Yapılandırılmış sanal POS bağlantısı sayısı
+- `successful_payment_count`: Aktif abonelik dönemindeki başarılı ödeme sayısı
+
+POS oluşturulurken kapasite rezerve edilir. Oluşturma başarısız olursa
+rezervasyon geri alınır. Ödeme kotası session claim sırasında ayrılır; başarısız
+veya tamamlanmamış işlemde geri bırakılır, başarılı işlemde deterministik usage
+event ile yalnız bir kez tüketilir.
+
+## İzlenecek operasyon göstergeleri
+
+- Intent başarı, ret, teknik hata ve `unknown` oranı
+- Sağlayıcı ve POS bazında başarı oranı
+- 3DS'e yönlenen ve tamamlanan işlem oranı
+- Failover sayısı ve hangi hata grubundan tetiklendiği
+- Payment intent'in `processing` veya `unknown` durumda kalma süresi
+- Webhook teslim süresi, retry sayısı ve `dead` olaylar
+- İptal/iade başarısı ve işlem süresi
+- POS credential doğrulama ve adaptör sağlık durumu
+- Kalan POS ve başarılı ödeme kotası
+
+## Alarm önerileri
+
+| Sinyal | Olası sorun | İlk kontrol |
+| --- | --- | --- |
+| `unknown` oranı yükseliyor | Sağlayıcı timeout veya callback kesintisi | Status sorgusu ve ağ sağlığı |
+| Tek POS'ta ret artıyor | Banka, kart ailesi veya sözleşme kısıtı | Hata grubu ve BIN kırılımı |
+| Webhook `dead` olayları | Merchant endpoint'i uzun süre başarısız | HTTP durumları ve imza tüketimi |
+| Taksit seçeneği kayboluyor | Aktif oran satırı veya POS eksik | Plan sürümü, para birimi, kart eşleşmesi |
+| POS aktivasyonu başarısız | Credential veya adaptör sorunu | Credential metadata ve sağlayıcı ortamı |
+
+## Operasyonel değişiklikler
+
+Oran planını yayınlamadan, credential döndürmeden veya POS'u production'da
+aktive etmeden önce iki kişi kontrolü uygulamanız önerilir. Değişiklik saatini,
+uygulayan kullanıcıyı, POS kimliğini ve plan sürümünü kendi operasyon kaydınızda
+tutun.
+
+<Warning>
+  Kalan kota sıfıra yaklaşırken yeni ödeme kabul etmeye devam edeceğinizi
+  varsaymayın. Ödeme sayfasını açmadan önce kullanım ve abonelik durumunu
+  izleyin; müşteri deneyimi için kontrollü hata mesajı hazırlayın.
+</Warning>

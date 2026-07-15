@@ -1,0 +1,62 @@
+---
+title: Sandbox ve test senaryoları
+description: POS, oran, 3DS, failover, iptal, iade ve webhook entegrasyonunu production öncesi doğrulayın.
+---
+
+Sandbox adaptörü gerçek fon hareketi oluşturmadan ödeme yaşam döngüsünü test
+etmenizi sağlar. Production POS credential'larını sandbox bağlantısında
+kullanmayın.
+
+## Hazırlık
+
+1. Sandbox destekli sağlayıcıyı katalogdan seçin.
+2. `environment: sandbox` POS oluşturun.
+3. Sandbox credential alanlarını yazın.
+4. TRY için tek çekim ve gerekli taksit satırlarını içeren oran planı yayınlayın.
+5. Merchant local/test origin'inizi allowlist'e ekleyin.
+6. Test webhook endpoint'ini ve secret'ını tanımlayın.
+7. POS doğrulamasını çalıştırın.
+
+## Zorunlu senaryolar
+
+| Senaryo | Beklenen sonuç |
+| --- | --- |
+| 3DS başarı | Intent `succeeded`, tek webhook, tek kullanım tüketimi |
+| Hard decline | Intent `failed`, başka POS denenmez |
+| Kesin teknik hata | Uygun ikinci POS varsa failover |
+| Belirsiz timeout | Intent `unknown`, failover yapılmaz |
+| Kullanılmış session | İkinci claim reddedilir |
+| Süresi dolmuş session | Yeni ödeme oturumu gerekir |
+| Yanlış origin | Ödeme oturumu reddedilir |
+| Aynı idempotency key | Yeni intent yerine ilk intent döner |
+| İptal | Canonical durum `canceled` |
+| Kısmi iade | Durum `partially_refunded` |
+| Tam iade | Durum `refunded` |
+| Duplicate webhook | Merchant işlemi ikinci kez uygulamaz |
+
+## Oran ve routing testleri
+
+Ayrı test kartı/BIN senaryolarıyla şu eşleşmeleri doğrulayın:
+
+- Kart ailesi + kuruluş
+- Kart ailesi + `ANY`
+- `GENERAL` + kuruluş
+- `GENERAL` + `ANY`
+- Tek çekim ve birden fazla taksit
+- Eşit maliyette routing önceliği
+- Müşteri oranı ve minor-unit yuvarlaması
+
+## Production'a geçmeden önce
+
+- Sandbox ve production POS'ları ayrı kayıt mı?
+- Production return origin'i tam olarak allowlist'te mi?
+- Webhook secret güvenli kasada mı?
+- Canonical status kontrolü sipariş akışına bağlı mı?
+- `unknown` durumunda ikinci ödeme engelleniyor mu?
+- Log ve hata izleme payload'larında PAN/CVC bulunmadığı doğrulandı mı?
+
+<Note>
+  Sandbox başarısı production sağlayıcısının ticari aktivasyonu, IP tanımı veya
+  credential doğruluğunu garanti etmez. Her production adaptörü ayrıca
+  doğrulanmalıdır.
+</Note>

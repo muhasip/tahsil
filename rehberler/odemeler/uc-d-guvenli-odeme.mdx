@@ -1,0 +1,50 @@
+---
+title: 3DS ödeme yaşam döngüsü
+description: 3DS yönlendirmesi, callback, canonical sonuç ve browser dönüşünün rollerini ayırın.
+---
+
+İlk sürümde kartlı satışlar 3DS ile yürütülür. 3DS doğrulaması ile bankanın
+finansal işlemi aynı anda veya ardışık adımlarda sonuçlanabilir; sağlayıcı
+farklılıklarını Tahsil normalize eder.
+
+## Akış
+
+1. Frontend geçerli ödeme oturumunu claim eder ve taksit seçimini kesinleştirir.
+2. Tahsil uygun POS adayını seçer ve değişmez bir attempt kaydı oluşturur.
+3. Kart işleme katmanı sağlayıcıda 3DS işlemini başlatır.
+4. Kullanıcı bankanın doğrulama ekranına yönlendirilir.
+5. Banka sonucu Tahsil callback adresine iletir.
+6. Attempt sonucu normalize edilir ve payment intent güncellenir.
+7. Kullanıcı izinli merchant dönüş URL'sine yönlendirilir.
+8. Merchant backend canonical durumu sorgular.
+
+## `requires_3ds` ne demektir?
+
+Bu durum ödeme başarısı değildir. Kullanıcının bankadaki doğrulama adımını
+tamamlaması gerektiğini gösterir. Sipariş hazırlama, fatura kesme veya hizmet
+aktivasyonu için `succeeded` durumunu bekleyin.
+
+## Callback ile return URL farkı
+
+- **Sağlayıcı callback'i**, ödeme sonucunun Tahsil'e yazıldığı sistem
+  entegrasyonudur.
+- **Merchant return URL'si**, kullanıcının sizin uygulamanıza geri dönmesidir.
+- **Webhook**, browser dönüşünden bağımsız sunucudan sunucuya bildirimdir.
+- **Canonical status**, her zaman `GET /payments/intents/{id}` cevabıdır.
+
+Kullanıcı 3DS ekranını kapatırsa return URL hiç açılmayabilir. Buna rağmen banka
+işlemi sonuçlandırmış olabilir. Bu nedenle frontend dönüşünü ödeme yaşam
+döngüsünün tek tamamlanma sinyali yapmayın.
+
+## Kullanıcı deneyimi
+
+Frontend aşağıdaki durumları ayrı göstermelidir:
+
+- Banka doğrulaması bekleniyor
+- Ödeme işleniyor
+- Ödeme başarılı
+- Ödeme reddedildi
+- Sonuç doğrulanıyor
+
+“Sonuç doğrulanıyor” ekranı `unknown` veya henüz callback alınmamış işlem için
+yanlışlıkla ikinci ödeme başlatılmasını önler.

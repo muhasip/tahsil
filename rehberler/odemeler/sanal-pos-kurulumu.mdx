@@ -1,0 +1,69 @@
+---
+title: Sanal POS kurulumu
+description: Sağlayıcı seçimi, credential yazma, oran planı ve aktivasyon sırasını uygulayın.
+---
+
+Bir POS bağlantısı yalnız kayıt oluşturulduğu için ödeme almaya başlamaz.
+Credential, yayınlanmış oran planı ve başarılı doğrulama olmadan bağlantı aktif
+hale getirilemez.
+
+## Kurulum sırası
+
+1. `GET /payments/providers` ile sağlayıcıyı ve desteklediği para birimlerini
+   doğrulayın.
+2. `POST /payments/virtual-poses` ile POS'u `draft` durumda oluşturun.
+3. `PUT /payments/virtual-poses/{id}/credentials` ile sağlayıcıdan aldığınız
+   credential alanlarını yazın.
+4. `POST /payments/virtual-poses/{posId}/rate-plans` ile draft oran planını
+   oluşturun.
+5. Planı `POST .../{planId}/publish` ile yayınlayın.
+6. `POST /payments/virtual-poses/{id}/verify` ile adaptör bağlantısını test edin
+   ve POS'u aktive edin.
+7. `GET /payments/virtual-poses/{id}` ile durum, ortam ve aktif planı kontrol
+   edin.
+
+## POS kaydı
+
+POS oluştururken sağlayıcı, görünen ad, ortam, para birimleri ve routing
+önceliği belirlenir. Ortam `sandbox` veya `production` olabilir. Sağlayıcı ve
+ortam kimliği oluşturma sonrasında değiştirilemez; yanlış seçimde yeni POS
+oluşturun.
+
+```json
+{
+  "providerId": "64f000000000000000000101",
+  "name": "TRY mağaza POS'u",
+  "environment": "sandbox",
+  "currencies": ["TRY"],
+  "routingPriority": 100
+}
+```
+
+## Credential davranışı
+
+Credential request'i sağlayıcının katalog şemasına uymalıdır. Değerler
+şifrelenerek saklanır ve sonraki GET cevaplarında geri verilmez. Okuma endpoint'i
+yalnız yapılandırılmış olup olmadığını ve güvenli metadata'yı gösterir.
+
+Credential değiştirmek için bütün zorunlu alanları yeniden gönderin. Eski
+değerin üzerine atomik olarak yazılır. Bağlantıyı kaldırmadan yalnız credential'ı
+silmek için `DELETE /payments/virtual-poses/{id}/credentials` kullanın.
+
+<Warning>
+  Credential değerlerini issue, destek mesajı, ekran görüntüsü veya log içinde
+  paylaşmayın. API cevabından geri okunamayacağı için kendi güvenli kasanızda
+  saklayın.
+</Warning>
+
+## Aktivasyon kontrol listesi
+
+- POS ortamı merchant sözleşmesiyle uyumlu mu?
+- En az bir para birimi tanımlı mı?
+- Bütün zorunlu credential alanları yazıldı mı?
+- En az bir satırlı oran planı yayınlandı mı?
+- İzinli ödeme origin'i ve dönüş URL'si hazır mı?
+- Bağlantı testi başarıyla tamamlandı mı?
+
+POS'u geçici olarak routing dışına almak için `disabled` durumuna geçirin.
+Silme işlemini ancak geçmiş ödeme kayıtları ve operasyon gereksinimleri
+değerlendirildikten sonra kullanın.

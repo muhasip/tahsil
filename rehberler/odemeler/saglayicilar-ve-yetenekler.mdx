@@ -1,0 +1,54 @@
+---
+title: Sağlayıcılar ve yetenekler
+description: Banka ve ödeme kuruluşu kataloğunu, credential şemasını ve POS yeteneklerini okuyun.
+---
+
+Sağlayıcı kataloğu, Tahsil'in hangi banka veya ödeme kuruluşu adaptörlerini
+tanıdığını gösterir. Katalog kaydı merchant sözleşmesi oluşturmaz; ilgili
+kuruluşla sanal POS anlaşmasını sizin tamamlamanız gerekir.
+
+## Kataloğu okuyun
+
+`GET /payments/providers` isteği etkin sağlayıcıları ve müşteri tarafından
+görülebilen yapılandırma bilgisini döndürür. Bir sağlayıcı kaydında şu kavramları
+ayrı değerlendirin:
+
+- **Tür:** Banka veya ödeme kuruluşu
+- **Durum:** Kataloğun müşteri kullanımına açık olup olmadığı
+- **Adaptör durumu:** Sandbox ya da production işleminin uygulanabilirliği
+- **Para birimleri:** POS bağlantısında seçilebilecek para birimleri
+- **Yetenekler:** 3DS satış, durum sorgusu, iptal ve iade desteği
+- **Credential alan şeması:** Sağlayıcıdan aldığınız hangi alanların zorunlu
+  olduğu
+
+<Note>
+  Bir sağlayıcının katalogda görünmesi, bütün yeteneklerin ve production
+  adaptörünün etkin olduğu anlamına gelmez. POS'u oluşturmadan önce ortam ve
+  yetenek bilgisini kontrol edin.
+</Note>
+
+## Aynı sağlayıcıdan birden fazla POS
+
+Aynı sağlayıcı için birden fazla POS bağlantısı oluşturabilirsiniz. Bu yapı;
+farklı mağaza numaraları, para birimleri, ticari sözleşmeler veya routing
+öncelikleri için kullanılır. Her bağlantının credential'ı, aktif oran planı ve
+durumu ayrıdır.
+
+Örneğin aynı bankada TRY ve EUR işlemleri için iki bağlantı ya da aynı ödeme
+kuruluşunda farklı komisyon sözleşmelerine sahip iki mağaza tanımlanabilir.
+
+## Sağlayıcı seçerken
+
+Yalnız entegrasyonun mevcut olmasına bakmayın. Aşağıdaki sözleşme özelliklerini
+de değerlendirin:
+
+- İstenen kart ailesi ve kart kuruluşu desteği
+- Tek çekim ve taksit yetenekleri
+- 3DS modeli ve callback davranışı
+- İptal ile iadenin zaman sınırları
+- Durum sorgusu ve belirsiz timeout çözümleme yeteneği
+- Para birimi ve yabancı kart desteği
+- Komisyon, blokaj ve valör koşulları
+
+Bu bilgiler routing maliyetinden önce ödeme adayının gerçekten uygun olup
+olmadığını belirler.

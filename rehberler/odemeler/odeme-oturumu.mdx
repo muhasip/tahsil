@@ -1,0 +1,65 @@
+---
+title: Ödeme oturumu entegrasyonu
+description: Merchant backend ile frontend arasındaki payment intent ve tek kullanımlık clientSecret akışını kurun.
+---
+
+Ödeme oturumu merchant backend tarafından oluşturulur. Tutar, para birimi ve
+sipariş referansı browser'dan güvenilir kabul edilmez; backend kendi sipariş
+kaydından üretir.
+
+## 1. Intent oluşturun
+
+`POST /payments/intents` çağrısında `x-company-id` ve benzersiz
+`Idempotency-Key` gönderin.
+
+```json
+{
+  "externalId": "order-2026-000184",
+  "amountMinor": 125000,
+  "currency": "TRY",
+  "returnUrl": "https://merchant.example/odeme/sonuc",
+  "metadata": {
+    "cartId": "cart-184"
+  }
+}
+```
+
+- `externalId`, merchant sistemindeki sipariş veya tahsilat referansıdır.
+- `amountMinor`, minor unit integer'dır; TRY için `125000`, 1.250,00 TL'dir.
+- `returnUrl` daha önce izin verilen origin'lerden biriyle eşleşmelidir.
+- `metadata` kart verisi veya hassas kişisel veri taşımamalıdır.
+
+Cevap intent kimliğini, kısa ömürlü `clientSecret` değerini ve ödeme oturumu
+için gerekli adresi döndürür. Aynı idempotency anahtarıyla tekrar çağrı
+yapıldığında yeni intent yerine ilk kayıt döner.
+
+## 2. Frontend'e yalnız oturum bilgisini verin
+
+Backend, `clientSecret` değerini yalnız ilgili ödeme sayfasına ve yalnız o
+oturum için iletir. Değeri URL query'sine, analytics event'ine veya kalıcı
+browser storage'a yazmayın.
+
+Oturum varsayılan olarak beş dakika geçerlidir ve yalnız bir kez claim
+edilebilir. Süresi dolan ya da kullanılmış secret için yeni intent veya iş
+kuralınıza uygun yeni ödeme denemesi oluşturun.
+
+## 3. Taksit seçeneklerini gösterin
+
+Kartın ilk sekiz hanesi girildiğinde frontend, kart işleme katmanından uygun
+taksit seçeneklerini ister. Dönen seçenekler kart ailesi, yayınlanmış oranlar ve
+aktif POS adaylarına göre hesaplanır.
+
+Kullanıcı taksiti seçtikten sonra kartın tamamı ve CVC yalnız kart işleme
+katmanına gönderilir. Merchant backend bu alanları görmez.
+
+## 4. Kesin sonucu backend'de doğrulayın
+
+Browser dönüşü kullanıcı deneyimini sürdürmek içindir; ödeme kanıtı değildir.
+Siparişi başarılıya geçirmek için `GET /payments/intents/{id}` canonical
+durumunu veya doğrulanmış webhook'u kullanın.
+
+<Warning>
+  Dönüş URL'sindeki `payment_status` değerini tek başına güvenilir kabul
+  etmeyin. Kullanıcı browser'ı kapatabilir, dönüş tekrar oynatılabilir veya
+  sağlayıcı sonucu sonradan kesinleşebilir.
+</Warning>
